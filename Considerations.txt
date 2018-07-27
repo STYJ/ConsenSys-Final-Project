@@ -1,0 +1,18 @@
+1. No one but you controls your ID
+2. Nobody can take away your ID
+3. You can choose what you want to do with your ID, what you share, who you share with.
+4. Flexible enough to accommodate not just individual IDs but also corporations. 
+5. One base parent ID but multiple IDs built on top of it.
+6. Back up addresses in the event you lose access to one of your IDs. 
+7. Multisig access (2FA via phone, email, * Private Key(s), Fingerprint)
+
+
+Future Features
+1. Zero knowledge proofs (potentially if I have time)
+- Correctness - if both participants are honest, everything works fine.
+- Soundness - if I don't know the secret, I cannot prove the statement nor prove I know the secret.
+- Zero knowledge - you learn nothing more than the statement that I wanted to prove to you. 
+
+For example, a deck of cards. 26 Black and 26 Red. If I take a card at random and want to prove to you that this card is say red, I can remove 26 black cards from the deck to prove to you that my card is indeed red. You know nothing else about the card other than the statement that I wanted to prove to you; that the card I'm holding is indeed red.
+
+2. Blockchain Agnostic

@@ -1,0 +1,7 @@
+1. Uninstall node | sudo apt-get purge --auto-remove nodejs
+2. Install nvm | curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
+3. Verify that nvm has been installed | command -v nvm
+4. Install node | nvm install node
+5. Install uport client | npm install --global uport-cli-client
+6. Install ganache-cli | npm install -g ganache-cli
+7. Install truffle | npm install -g truffle
