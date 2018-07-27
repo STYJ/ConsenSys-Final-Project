@@ -1,10 +1,13 @@
 pragma solidity ^0.4.24;
-import "./IdentityStructure.sol";
+import "./IdentityUtils.sol";
 
-contract SelfSovereignIdentity{
+contract SelfSovereignIdentity {
     
     
     // Variables
+    string[] structureKeys;
+    
+    
     mapping(string => Structure) public idTypes;
     
     
@@ -24,7 +27,7 @@ contract SelfSovereignIdentity{
     
     // Functions
  
-    constructor() public{
+    constructor() public {
 
     }
     
