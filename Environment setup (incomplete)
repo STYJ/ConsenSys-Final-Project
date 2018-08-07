@@ -1,0 +1,14 @@
+Assuming fresh installation of ubuntu 16.04
+1. Install nvm with the following command:
+	curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
+2. Close current terminal and open a new one.
+3. Verify that nvm is installed with the following:
+	command -v nvm
+4. Install node with the following command:
+	nvm install node
+5. Install react, react-router, react-router-dom with the following command:
+	npm install react react-router react-router-dom --save
+6. Install ganache-cli with the following command:
+	npm install -g ganache-cli
+7. Install truffle with the following command:
+	npm install -g truffle
