@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import getWeb3 from './utils/getWeb3'
 
 // import getContractInstance from './utils/getContractInstance'
-// import contractDefinition from './contracts/SimpleStorage.json'
+// import contractDefinition from './contracts/UserRegistry.json'
 
 
 import {
@@ -13,36 +13,10 @@ import {
   Switch
 } from 'react-router-dom';
 
-
-
-export const disconnectedRoute = [
-  {
-    path: "/disconnected",
-    main: () => <h2>Please login to Metamask.</h2>
-  }
-];
-
-
-export const connectedRoutes = [
-  {
-    path: "/home",
-    main: () => <h2>Welcome back!</h2>
-  },
-  {
-    path: "/requestApproval",
-    main: () => <h2>Please enter an address here to request for their approval.</h2>
-  },
-  {
-    path: "/pendingApproval",
-    main: () => <h2>These are the addresses pending your approval</h2>
-  },
-  {
-    path: "/about",
-    main: () => <h2>about</h2>
-  }
-];
-
-
+import {
+  disconnectedRoute,
+  connectedRoutes
+} from "./utils/routes"
 
 
 class App extends Component {
@@ -53,23 +27,31 @@ class App extends Component {
     this.state = {
       web3: null,
       prevAddress: null,
+      prevPath: null,
       address: null,
-      route: null
+      route: null,
+      contract: null,
+      redirect: true
     }
     this.getRoute = this.getRoute.bind(this);
     this.getContents = this.getContents.bind(this);
-    this.renderRedirect = this.renderRedirect.bind(this);
   }
 
 
   // This function is called everytime after render is called
   componentDidUpdate = async () => {
 
-      if(this.state.address) {
-        console.log("User is logged in at", this.state.address);
-      } else {
-        console.log("user is either not logged in or has logged out");
+      if(this.state.redirect) {
+        console.log('rerendering to get rid of redirect')
+        this.setState({redirect: false})
       }
+
+      // this.forceUpdate()
+      // if(this.state.address) {
+      //   console.log("User is logged in at", this.state.address);
+      // } else {
+      //   console.log("user is either not logged in or has logged out");
+      // }
   }
 
   // This function is only run once when the component is mounted for the first time
@@ -89,6 +71,12 @@ class App extends Component {
 
       // Get route after getting accounts
       const route = await this.getRoute(address)
+      console.log(web3, address, route)
+
+
+      // Get the contract instance by passing in web3 and the contract definition.
+      // const contract = await getContractInstance(web3, contractDefinition)
+
 
       // Set web3, accounts, routes and contract to the state then subscribe to publicConfigStore
       // This is the second time render is called.
@@ -103,31 +91,53 @@ class App extends Component {
         this.state.web3.currentProvider.publicConfigStore.on(
           'update',
           (props) => {
-            console.log("public store is updated")
             let address = props.selectedAddress;
-            if(typeof props.selectedAddress !== 'undefined') {
-              // User is still logged in
-              if(props.selectedAddress !== this.state.address) {
-                // Update with new address and update routes to reflect address.
-                let updatedRoutes = connectedRoutes;
-                updatedRoutes[0].main = () => <h2>Welcome back! {this.state.address}</h2>
+
+            // This if is to handle the event when you logout and you try to log back in. The address will be '' so when you try to do this.state.address.toLowerCase(), it'll fail. 
+            console.log(this.state)
+            if(this.state.address) {
+              
+              if(typeof address !== 'undefined') {
+
+                // User is still logged in
+                // You need to do the toLowerCase cause for some reason, update functions keep getting triggered on all networks except local ganache network.
+                if(address !== this.state.address.toLowerCase()) {
+
+                  console.log("User is changing metamask accounts")
+                  // Update with new address and update routes to reflect address.
+                  let updatedRoutes = connectedRoutes;
+                  updatedRoutes[0].main = () => <h2>Welcome back! {this.state.address}</h2>
+                  this.setState((prevState) => ({
+                    address,
+                    prevAddress: prevState.address,
+                    route:updatedRoutes,
+                    redirect: true
+                  }))
+                }
+
+
+              } else {
+                console.log("User has logged out")
+                // User logged out
                 this.setState((prevState) => ({
-                  address,
+                  address: '',
                   prevAddress: prevState.address,
-                  route:updatedRoutes
+                  route: disconnectedRoute,
+                  redirect: true
                 }))
               }
             } else {
-              // User logged out
+              console.log("User is relogging in")
+              let updatedRoutes = connectedRoutes;
+              updatedRoutes[0].main = () => <h2>Welcome back! {this.state.address}</h2>
               this.setState((prevState) => ({
-                address: '',
-                prevAddress: prevState.address,
-                route: disconnectedRoute
+                    address,
+                    prevAddress: prevState.address,
+                    route:updatedRoutes,
+                    redirect: true
               }))
             }
-
           }
-
         )
       })
     } catch (error) {
@@ -136,10 +146,6 @@ class App extends Component {
       console.log(error)
     }
   }
-
-
-
-
 
 
   getRoute = async (address) => {
@@ -151,16 +157,6 @@ class App extends Component {
     return updatedRoutes;
   }
 
-  renderRedirect = (location) => {
-    if(location !== this.state.route[0].path) {
-      return <Redirect to={this.state.route[0].path}/>
-    } 
-    else {
-      console.log("Path is the same, do not redirect")
-      // return <Redirect to=location/>
-    }
-  }
-
   getContents = (prevAddress, address, route) => {
     let currPath = window.location.pathname
     let nextPath = route[0].path
@@ -169,6 +165,7 @@ class App extends Component {
     // Getting redirect if any.
     if(prevAddress !== address && currPath !== nextPath) {
       redirect = <Redirect exact from={currPath} to={nextPath}/>
+
     }
 
 
@@ -205,7 +202,6 @@ class App extends Component {
                   component={route.main}
                 />
               ))}
-
             </Switch>
           </div>
         </div>
@@ -279,7 +275,6 @@ class App extends Component {
 
 
 
-
   render() { 
 
     if (!this.state.web3) { 
@@ -297,17 +292,6 @@ class App extends Component {
 
   }
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 // class App extends Component {
