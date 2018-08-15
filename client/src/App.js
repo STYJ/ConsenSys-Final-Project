@@ -1,8 +1,8 @@
 import React, { Component } from 'react'
 import getWeb3 from './utils/getWeb3'
 
-// import getContractInstance from './utils/getContractInstance'
-// import contractDefinition from './contracts/UserRegistry.json'
+import getContractInstance from './utils/getContractInstance'
+import contractDefinition from './contracts/UserRegistry.json'
 
 
 import {
@@ -45,13 +45,6 @@ class App extends Component {
         console.log('rerendering to get rid of redirect')
         this.setState({redirect: false})
       }
-
-      // this.forceUpdate()
-      // if(this.state.address) {
-      //   console.log("User is logged in at", this.state.address);
-      // } else {
-      //   console.log("user is either not logged in or has logged out");
-      // }
   }
 
   // This function is only run once when the component is mounted for the first time
@@ -71,12 +64,9 @@ class App extends Component {
 
       // Get route after getting accounts
       const route = await this.getRoute(address)
-      console.log(web3, address, route)
-
 
       // Get the contract instance by passing in web3 and the contract definition.
-      // const contract = await getContractInstance(web3, contractDefinition)
-
+      const contract = await getContractInstance(web3, contractDefinition)
 
       // Set web3, accounts, routes and contract to the state then subscribe to publicConfigStore
       // This is the second time render is called.
@@ -94,7 +84,6 @@ class App extends Component {
             let address = props.selectedAddress;
 
             // This if is to handle the event when you logout and you try to log back in. The address will be '' so when you try to do this.state.address.toLowerCase(), it'll fail. 
-            console.log(this.state)
             if(this.state.address) {
               
               if(typeof address !== 'undefined') {
@@ -106,7 +95,7 @@ class App extends Component {
                   console.log("User is changing metamask accounts")
                   // Update with new address and update routes to reflect address.
                   let updatedRoutes = connectedRoutes;
-                  updatedRoutes[0].main = () => <h2>Welcome back! {this.state.address}</h2>
+                  updatedRoutes[0].main = () => <h2>Welcome back <i>{this.state.address}</i>!</h2>
                   this.setState((prevState) => ({
                     address,
                     prevAddress: prevState.address,
@@ -129,7 +118,7 @@ class App extends Component {
             } else {
               console.log("User is relogging in")
               let updatedRoutes = connectedRoutes;
-              updatedRoutes[0].main = () => <h2>Welcome back! {this.state.address}</h2>
+              updatedRoutes[0].main = () => <h2>Welcome back <i>{this.state.address}</i>!</h2>
               this.setState((prevState) => ({
                     address,
                     prevAddress: prevState.address,
@@ -153,7 +142,7 @@ class App extends Component {
       return disconnectedRoute;
     }
     let updatedRoutes = connectedRoutes;
-    updatedRoutes[0].main = () => <h2>Welcome back! {this.state.address}</h2>
+    updatedRoutes[0].main = () => <h2>Welcome back <i>{this.state.address}</i>!</h2>
     return updatedRoutes;
   }
 

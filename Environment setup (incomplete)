@@ -17,8 +17,7 @@ Assuming fresh installation of ubuntu 16.04
 
 To play around, do this.
 
+0) run ganache-cli and then truffle migrate
 1) cd Client, npm install
-2) run ganache-cli
-3) open browser with metamask and change provider to local host 8545.
-4) Choose either to log in or out of metamask. 
-5) CD into client again and do npm start.
+2) open browser with metamask and change provider to local host 8545.
+4) npm start inside client folder
