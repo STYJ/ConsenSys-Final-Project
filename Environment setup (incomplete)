@@ -12,3 +12,13 @@ Assuming fresh installation of ubuntu 16.04
 	npm install -g ganache-cli
 7. Install truffle with the following command:
 	npm install -g truffle
+
+
+
+To play around, do this.
+
+1) cd Client, npm install
+2) run ganache-cli
+3) open browser with metamask and change provider to local host 8545.
+4) Choose either to log in or out of metamask. 
+5) CD into client again and do npm start.

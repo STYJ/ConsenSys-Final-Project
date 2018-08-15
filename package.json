@@ -1,19 +1,22 @@
 {
-  "name": "consensys-final-project",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "ajv": "^6.5.2",
-    "react": "^16.4.2",
-    "react-dom": "^16.4.2",
-    "react-router": "^4.3.1",
-    "react-router-dom": "^4.3.1",
-    "react-scripts": "1.1.4"
+  "name": "truffle-react",
+  "version": "1.0.0",
+  "description": "A boilerplate Truffle Box project with Create React App for rapid Ethereum Dapp development",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adrianmcli/truffle-react.git"
   },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+  "keywords": [],
+  "author": "Adrian Li",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/adrianmcli/truffle-react/issues"
+  },
+  "homepage": "https://github.com/adrianmcli/truffle-react#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-register": "^6.26.0"
   }
 }
