@@ -43,7 +43,8 @@ class App extends Component {
     this.getRoute = this.getRoute.bind(this);
     this.getContents = this.getContents.bind(this);
     this.subscribeCallBack = this.subscribeCallBack.bind(this);
-    this.uploadtoIPFS = this.uploadtoIPFS.bind(this);
+    this.uploadToIPFS = this.uploadToIPFS.bind(this);
+    this.register = this.register.bind(this);
     this.getFromIPFS = this.getFromIPFS.bind(this);
   }
 
@@ -117,6 +118,22 @@ class App extends Component {
       console.log(error)
     }
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   subscribeCallBack = async (props) => {
 
@@ -206,28 +223,27 @@ class App extends Component {
 
     xhr.onload = function( e ) {
       // Obtain a blob: URL for the image data.
-      var arrayBufferView = new Uint8Array( this.response );
+      var arrayBufferView = new Uint8Array(this.response);
       var blob = new Blob( [ arrayBufferView ], { type: "image/jpeg" } );
       var urlCreator = window.URL || window.webkitURL;
       var imageUrl = urlCreator.createObjectURL( blob );
-      var img = document.querySelector('#ipfsImage');
-      img.src = imageUrl;
+      // 
+      var image = document.querySelector('#ipfsImage');
+
+      // Id is unique but className is not. However I used Id in both because if you look at elements, it changes when you go from one page to another i.e. in the source code, there will only ever by 1 id of ipfsImage.
+      image.src = imageUrl;
     };
 
     xhr.send();
 
   }
 
-  uploadtoIPFS = async (app, reader, name, address) => {
+  uploadToIPFS = async (app, reader, name, address) => {
     const buffer = await Buffer.from(reader.result);
-    console.log("ipfs", ipfs);
-    console.log("buffer", buffer);
-    console.log("app", app);
-    console.log("reader", reader);
-    console.log("name", name);
-    console.log("address", address);
     
-    
+    // Logic here a bit wonky. You should sign transaction then add to ipfs.
+    // Once you get the hash, then update the function arguments? But i don't know how to alter function parameters after the transaction is signed. 
+    // https://itnext.io/build-a-simple-ethereum-interplanetary-file-system-ipfs-react-js-dapp-23ff4914ce4e
     let res = await ipfs.files.add(buffer);
     
 
@@ -249,6 +265,7 @@ class App extends Component {
 
   };
 
+  // Get the updated routes
   getRoute = async (address, registered) => {
     if(typeof address === 'undefined'){
       return disconnectedRoute;
@@ -260,11 +277,84 @@ class App extends Component {
       route[0].main = () => <h2>Hi there <i>{address}</i>! Please register an identity if you wish to use this identity dapp.</h2> 
     } else {
       route = connectedRoutes
-      route[0].main = () =>
-        <h2>Welcome back {this.state.name}! </h2>
+
+      // Updating routes
+      route[0].main = () => 
+      <div>
+        <h2>Welcome back {this.state.name}! Your imageHash is {this.state.imageHash} </h2>
+        <img id="ipfsImage" src=''></img>
+      </div>
+
+      route[1].main = () =>
+      <div>
+        <h2>Update your details here!</h2>
+        <form onSubmit={this.update}>
+          <label>
+            Name:
+            <input placeholder={this.state.name} type="text" id="name"/>
+          </label>
+          <br/>
+          <label>
+            Image:
+            <input placeholder="Your image" type="file" id="image"/>
+          </label>
+          <img id="ipfsImage" src=''></img>
+          <br/>
+
+
+          <button>Submit Registration!</button>
+        </form>
+
+
+
+      </div>
     }
     
     return route;
+  }
+
+
+  // Process the registration input values
+  register = async (event) => {
+
+    event.stopPropagation();
+    event.preventDefault();
+
+    let name = document.getElementById("name").value;
+    let file = document.getElementById("image").files[0]
+
+    let reader = new window.FileReader();
+    reader.readAsArrayBuffer(file);
+    reader.onloadend = () => this.uploadToIPFS(this, reader, name, this.state.address);
+  }
+
+  // Update the identity
+  update = async (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+
+
+    let name = document.getElementById("name").value;
+    let file = document.querySelector('input[type=file]').files[0]
+
+    // Name can be either '' or something
+    // file can be either undefined or something
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   }
 
   getContents = (app) => {
@@ -329,28 +419,12 @@ class App extends Component {
       if(!app.state.registered){
         console.log("if not registered")
 
-        // Process the registration input values
-        async function register(event) {
-
-          event.stopPropagation();
-          event.preventDefault();
-
-          let name = document.getElementById("name").value;
-          let file = document.querySelector('input[type=file]').files[0]
-   
-          let reader = new window.FileReader();
-          reader.readAsArrayBuffer(file);
-
-          reader.onloadend = () => app.uploadtoIPFS(app, reader, name, address);
-        }
-
-
 
         const button = () => {
           // Don't forget to specify max length for input.
           return(
 
-            <form onSubmit={register}>
+            <form onSubmit={this.register}>
               <label>
                 Name:
                 <input placeholder="Your name" type="text" id="name"/>
@@ -361,7 +435,6 @@ class App extends Component {
                 <input placeholder="Your image" type="file" id="image"/>
               </label>
               <br/>
-
 
 
               <button>Submit Registration!</button>
@@ -403,8 +476,9 @@ class App extends Component {
       } else {
 
         console.log("if registered")
-        
-        //this.getFromIPFS(app.state.imageHash)
+
+        // This is for the very first load.
+        this.getFromIPFS(app.state.imageHash)
 
         // If user is registered, display connected page
         return (
@@ -433,10 +507,12 @@ class App extends Component {
                 }}
               >
                 <li>
-                  <Link to="/home">Home</Link>
+                  <Link to="/home" onClick={()=>
+        this.getFromIPFS(app.state.imageHash)}>Home</Link>
                 </li>
                 <li>
-                  <Link to="/updateDetails">Update Details</Link>
+                  <Link to="/updateDetails" onClick={()=>
+        this.getFromIPFS(app.state.imageHash)}>Update Details</Link>
                 </li>
                 <li>
                   <Link to="/requestApproval">Request for Approval</Link>

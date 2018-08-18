@@ -22,7 +22,7 @@ export const connectedRoutes = [
   },
   {
     path: "/updateDetails",
-    main: () => <h2>Update your details here!</h2>
+    main: () => <h2>Placeholder text</h2>
   },
   {
     path: "/requestApproval",
