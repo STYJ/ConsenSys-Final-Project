@@ -17,7 +17,10 @@ Assuming fresh installation of ubuntu 16.04
 
 To play around, do this.
 
-0) run ganache-cli and then truffle migrate
+0) run ganache-cli and then navigate to the contracts folder and do truffle compile and truffle migrate
 1) cd Client, npm install
-2) open browser with metamask and change provider to local host 8545.
-4) npm start inside client folder
+2) type ipfs config Addresses.API in terminal and check that it returns "/ip4/127.0.0.1/tcp/5001", else run ipfs config Addresses.API /ip4/127.0.0.1/tcp/5001
+3) run ipfs daemon with the command ipfs daemon
+4) open browser with metamask and change provider to local host 8545, import some accounts.
+5) npm start inside client folder
+6) play around.

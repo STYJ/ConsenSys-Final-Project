@@ -1,5 +1,6 @@
 import React from 'react'
 
+
 export const disconnectedRoute = [
   {
     path: "/disconnected",
@@ -7,11 +8,21 @@ export const disconnectedRoute = [
   }
 ];
 
+export const newRegistrationRoute = [
+  {
+    path: "/newRegistration",
+    main: () => <h2>Placeholder text</h2>
+  }
+];
 
 export const connectedRoutes = [
   {
     path: "/home",
-    main: () => <h2>Welcome back!</h2>
+    main: () => <h2>Placeholder text</h2>
+  },
+  {
+    path: "/updateDetails",
+    main: () => <h2>Update your details here!</h2>
   },
   {
     path: "/requestApproval",
