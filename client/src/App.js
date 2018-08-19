@@ -40,14 +40,23 @@ class App extends Component {
       name: '',
       imageHash: ''
     }
+    this.getRegistrationStatus = this.getRegistrationStatus.bind(this)
+    this.getMyIdentity = this.getMyIdentity.bind(this)
     this.getRoute = this.getRoute.bind(this);
     this.getContents = this.getContents.bind(this);
     this.subscribeCallBack = this.subscribeCallBack.bind(this);
+    this.createUser = this.createUser.bind(this);
     this.uploadToIPFS = this.uploadToIPFS.bind(this);
     this.register = this.register.bind(this);
+
+    this.updateUserDetails = this.updateUserDetails.bind(this);
+    this.update = this.update.bind(this);
     this.getFromIPFS = this.getFromIPFS.bind(this);
+
   }
 
+
+  /** Native component lifecycle methods **/
 
   // This function is called everytime after render is called (after componentDidMount but CDM is only call one time whereas this is called everytime the component is updated)
   componentDidUpdate = async () => {
@@ -63,7 +72,6 @@ class App extends Component {
   // This function is only run once when the component is mounted for the first time
   componentDidMount = async () => {
     try {
-      
       // await is the same as .then without any callback function.
       // Get network provider and web3 instance.
       const web3 = await getWeb3()
@@ -73,22 +81,44 @@ class App extends Component {
 
       // Use web3 to get the user's accounts.
       // If using metamask, the array will always have size of 1 (the selected account).
-      const address = (await web3.eth.getAccounts())[0]
+      const address = web3.eth.accounts[0]
 
       // When testing with ganache locally however, you can most definitely receive more than 1 accounts so use something like this instead (change state.address to accounts)
       // const accounts = await web3.eth.getAccounts()
-      let registered = await contract.methods.isRegistered(address).call({from: address}, (error, retval) => retval);
+      // Getting registration status
 
+      let registered = false;
+
+      if(typeof address !== 'undefined') {
+        try {
+          console.log("trying to get registration status inside componentDidMount");
+          registered = await this.getRegistrationStatus(contract, address);
+        } catch(error) {
+          alert("Unable to get registration status, please see the developer console.")
+          console.log(error)
+        }
+        console.log("inside componentDidMount, registered:": registered)
+      }
+
+      
+
+      // Getting identity if registration exists
       let name='';
       let imageHash='';
 
       if(registered) {
-        let result = await contract.methods.getMyIdentity().call(
-          {from:address},
-          (error, retval) => retval)
-        
-        name = result[0]
-        imageHash = result[1]
+        let result;
+        try {
+          console.log("trying to get my identity inside componentDidMount");
+          result = await this.getMyIdentity(contract, address);
+          name = result[0];
+          imageHash = result[1];
+        } catch(error) {
+          alert("Unable to get identity, please see the developer console.")
+          console.log(error)
+        }
+        console.log("inside componentDidMount, Name:", name);
+        console.log("inside componentDidMount, imageHash:", imageHash);
       }
 
       // Get route after getting accounts
@@ -106,7 +136,7 @@ class App extends Component {
         name,
         imageHash
       }, () => {
-        console.log("subscribing to public config store");
+        console.log("inside componentDidMount, subscribing to public config store ");
         this.state.web3.currentProvider.publicConfigStore.on(
           'update',
           this.subscribeCallBack);
@@ -135,143 +165,54 @@ class App extends Component {
 
 
 
-  subscribeCallBack = async (props) => {
-
-    let contract = this.state.contract;
-    let address = props.selectedAddress;
-    let registered = await contract.methods.isRegistered(address).call(
-      {from: address},
-      (error, retval) => retval
-    );
-    let route = await this.getRoute(address, registered);
-
-  
-    // This if is to handle the event when you logout and you try to log back in. The address will be '' so when you try to do this.state.address.toLowerCase(), it'll fail. 
-    if(this.state.address) {
-      console.log("User is still logged in")
-
-      // User is still logged in
-      if(typeof address !== 'undefined') {
-
-        // You need to do the toLowerCase cause for some reason, update functions keep getting triggered on all networks except local ganache network.
-        if(address !== this.state.address.toLowerCase()) {
-          let name, imageHash;
-
-          if(registered) {
-            let result = await contract.methods.getMyIdentity().call(
-              {from:address},
-              (error, retval) => retval
-            );
-            name = result[0];
-            imageHash = result[1];
-          } 
-
-          console.log("name is", name, "imageHash is", imageHash)
-
-          console.log("User is changing metamask accounts")
-          // Update with new address and update routes to reflect address.
-
-          this.setState((prevState) => ({
-            address,
-            prevAddress: prevState.address,
-            route,
-            registered, 
-            redirect: true,
-            name,
-            imageHash
-          }))
-        }
 
 
-      } else {
-        console.log("User has logged out")
-        // User logged out
-        this.setState((prevState) => ({
-          address: '',
-          prevAddress: prevState.address,
-          route: disconnectedRoute,
-          registered: false,
-          redirect: true,
-          name: '',
-          imageHash: ''
-        }))
-      }
-    } else {
-      console.log("User is relogging in")
-      this.setState((prevState) => ({
+
+  /** Utility functions **/
+
+
+  getRegistrationStatus = async (contract, address) => {
+    return new Promise(function(resolve, reject) {
+      contract.isRegistered(
         address,
-        prevAddress: prevState.address,
-        route,
-        registered,
-        redirect: true
-      }))
-    }
+        {from:address},
+        function(err, res){
+          if(err) {
+            reject(err);
+          } else {
+            resolve(res);
+          }
+        }
+      )
+    })
   }
 
-  getFromIPFS = async(hash) => {
 
-    // Simulate a call to Dropbox or other service that can
-    // return an image as an ArrayBuffer.
-    var xhr = new XMLHttpRequest();
 
-    // Use JSFiddle logo as a sample image to avoid complicating
-    // this example with cross-domain issues.
-    xhr.open( "GET", "https://gateway.ipfs.io/ipfs/" + hash, true );
-
-    // Ask for the result as an ArrayBuffer.
-    xhr.responseType = "arraybuffer";
-
-    xhr.onload = function( e ) {
-      // Obtain a blob: URL for the image data.
-      var arrayBufferView = new Uint8Array(this.response);
-      var blob = new Blob( [ arrayBufferView ], { type: "image/jpeg" } );
-      var urlCreator = window.URL || window.webkitURL;
-      var imageUrl = urlCreator.createObjectURL( blob );
-      // 
-      var image = document.querySelector('#ipfsImage');
-
-      // Id is unique but className is not. However I used Id in both because if you look at elements, it changes when you go from one page to another i.e. in the source code, there will only ever by 1 id of ipfsImage.
-      image.src = imageUrl;
-    };
-
-    xhr.send();
-
+  getMyIdentity = async (contract, address) => {
+    return new Promise(function(resolve, reject) {
+      contract.getMyIdentity(
+        {from: address},
+        function(err, res){
+          if(err) {
+            reject(err);
+          } else {
+            resolve(res);
+          }
+        }
+      )
+    })
   }
 
-  uploadToIPFS = async (app, reader, name, address) => {
-    const buffer = await Buffer.from(reader.result);
-    
-    // Logic here a bit wonky. You should sign transaction then add to ipfs.
-    // Once you get the hash, then update the function arguments? But i don't know how to alter function parameters after the transaction is signed. 
-    // https://itnext.io/build-a-simple-ethereum-interplanetary-file-system-ipfs-react-js-dapp-23ff4914ce4e
-    let res = await ipfs.files.add(buffer);
-    
-
-
-    await app.state.contract.methods.createUser(name, res[0].hash).send({from: address, name, imageHash: res[0].hash})
-    .on('receipt', async (receipt) => {
-      console.log("Receipt is:", receipt);
-
-      // Updating the route and registered status
-      let registered = true;
-      let route = await app.getRoute(address, registered);
-      app.setState({name, imageHash: res[0].hash, registered, route})
-    })
-    .on('error', (error) => {
-      // I've tried catching the error but it's a metamask issue. https://github.com/MetaMask/metamask-extension/issues/4431
-      console.log("Error is:", error);
-      // even though registered is already false, we're setting state again because we want to rerender the page.
-    })
-
-  };
-
-  // Get the updated routes
+  // Get the updated routes based on address and registration status
   getRoute = async (address, registered) => {
     if(typeof address === 'undefined'){
       return disconnectedRoute;
     }
 
     let route;
+
+    // Updating routes with information stored on state.
     if(!registered) {
       route = newRegistrationRoute
       route[0].main = () => <h2>Hi there <i>{address}</i>! Please register an identity if you wish to use this identity dapp.</h2> 
@@ -282,38 +223,162 @@ class App extends Component {
       route[0].main = () => 
       <div>
         <h2>Welcome back {this.state.name}! Your imageHash is {this.state.imageHash} </h2>
-        <img id="ipfsImage" src=''></img>
+        <img id="ipfsImage" src='' alt='this is a pic that you uploaded previously'></img>
       </div>
 
       route[1].main = () =>
       <div>
         <h2>Update your details here!</h2>
         <form onSubmit={this.update}>
-          <label>
-            Name:
-            <input placeholder={this.state.name} type="text" id="name"/>
+          <label align="left">
+            Current Name: {this.state.name} <br/>
+            New Name:<input placeholder="Your new name" type="text" id="name"/>
           </label>
           <br/>
           <label>
-            Image:
+            Old Image:
+            <img id="ipfsImage" src='' alt='this is a pic that you uploaded previously'></img> 
+            <br/>
+            New Image:
             <input placeholder="Your image" type="file" id="image"/>
           </label>
-          <img id="ipfsImage" src=''></img>
           <br/>
-
-
-          <button>Submit Registration!</button>
+          <button>Update Identity</button>
         </form>
-
-
-
       </div>
     }
     
     return route;
   }
 
+  // Helper function 
+  subscribeCallBack = async (props) => {
 
+    let contract = this.state.contract;
+    let address = props.selectedAddress;
+    let registered
+
+    try {
+      console.log("SCB, trying to get registration status");
+      registered = await this.getRegistrationStatus(contract, address);
+    } catch(error) {
+      alert("Unable to get registration status, please see the developer console.")
+      console.log(error)
+    }
+    console.log("SCB, registered:", registered)
+
+    let route = await this.getRoute(address, registered);
+
+    // This if is to handle the event when you logout and you try to log back in. The address will be '' so when you try to do this.state.address.toLowerCase(), it'll fail. 
+
+    // This is to handle the many times when this event is triggered even though nothing has changed. Try console.log(props)
+    if(typeof this.state.address !== 'undefined') {
+      if(address !== this.state.address.toLowerCase()){
+        if(this.state.address) {
+          console.log("SCB, User is still logged in")
+
+          // User is still logged in
+          if(typeof address !== 'undefined') {
+
+            let name, imageHash;
+            if(registered) {
+              let result;
+              try {
+                console.log("SCB, trying to get my identity");
+                result = await this.getMyIdentity(contract, address);
+                name = result[0];
+                imageHash = result[1];
+              } catch(error) {
+                console.log("Unable to get identity, please see the developer console")
+                console.log(error)
+              }
+              console.log("SCB, Name:", name);
+              console.log("SCB, imageHash:", imageHash);
+            } 
+
+            console.log("SCB, User is changing metamask accounts")
+            // Update with new address and update routes to reflect address.
+
+            this.setState((prevState) => ({
+              address,
+              prevAddress: prevState.address,
+              route,
+              registered, 
+              redirect: true,
+              name,
+              imageHash
+            }))
+          } else {
+            console.log("SCB, User has logged out")
+            // User logged out
+            this.setState((prevState) => ({
+              address: '',
+              prevAddress: prevState.address,
+              route: disconnectedRoute,
+              registered: false,
+              redirect: true,
+              name: '',
+              imageHash: ''
+            }))
+          }
+        } else {
+          console.log("SCB, User is relogging in")
+          this.setState((prevState) => ({
+            address,
+            prevAddress: prevState.address,
+            route,
+            registered,
+            redirect: true
+          }))
+        }
+      }   
+    }
+  }
+
+
+  createUser = async (contract, address, name, hash) => {
+    return new Promise(function(resolve, reject) {
+      contract.createUser(
+        name,
+        hash,
+        {from:address},
+        function(err, res){
+          if(err) {
+            reject(err);
+          } else {
+            resolve(res);
+          }
+        }
+      )
+    })
+  }
+
+
+  uploadToIPFS = async (app, reader, name, address) => {
+    const buffer = await Buffer.from(reader.result);
+    
+    // Logic here a bit wonky. You should sign transaction then add to ipfs.
+    // Once you get the hash, then update the function arguments? But i don't know how to alter function parameters after the transaction is signed. 
+    // https://itnext.io/build-a-simple-ethereum-interplanetary-file-system-ipfs-react-js-dapp-23ff4914ce4e
+    let res = await ipfs.files.add(buffer);
+
+    try {
+      console.log("trying to create user inside uploadToIPFS");
+      await this.createUser(app.state.contract, address, name, res[0].hash);
+      console.log("user is created! inside uploadToIPFS")
+
+      let registered = true;
+      let route = await this.getRoute(address, registered);
+      
+      this.setState({name, imageHash: res[0].hash, registered, route})
+    } catch(error) {
+      alert("unable to upload image to IPFS, please see the developer console.")
+      console.log(error)
+      this.setState({registered: false})
+    }
+  };
+
+  // Maybe you want to change your registration workflow. Register with an empty account first? Main page will check if name and image is blank, if so the text will say "please update your identity". The updateDetails page will also do a similar conditional rendering.
   // Process the registration input values
   register = async (event) => {
 
@@ -323,39 +388,323 @@ class App extends Component {
     let name = document.getElementById("name").value;
     let file = document.getElementById("image").files[0]
 
-    let reader = new window.FileReader();
-    reader.readAsArrayBuffer(file);
-    reader.onloadend = () => this.uploadToIPFS(this, reader, name, this.state.address);
+    if(name !== '' && typeof file !== 'undefined') {
+      let reader = new window.FileReader();
+      reader.readAsArrayBuffer(file);
+      reader.onloadend = () => this.uploadToIPFS(this, reader, name, this.state.address);
+    }
   }
 
-  // Update the identity
+
+
+
+
+
+
+  updateUserDetails = async (contract, address, name, hash, choice) => {
+    return new Promise(function(resolve, reject) {
+      switch(choice) {
+        case 1: 
+          contract.updateName(
+            name,
+            {from: address},
+            function(err, res){
+              if(err) {
+                reject(err);
+              } else {
+                resolve(res);
+              }
+            }
+          )
+          break;
+
+        case 2:
+          contract.updateImageHash(
+            hash,
+            {from: address},
+            function(err, res){
+              if(err) {
+                reject(err);
+              } else {
+                resolve(res);
+              }
+            }
+          )
+          break;
+
+        case 3:
+          contract.updateNameAndImage(
+            name,
+            hash,
+            {from: address},
+            function(err, res){
+              if(err) {
+                reject(err);
+              } else {
+                resolve(res);
+              }
+            }
+          )
+          break;
+
+        default: 
+          contract.updateNameAndImage(
+            '',
+            '',
+            {from: address,
+             gas: 3000000},
+            function(err, res){
+              if(err) {
+                reject(err);
+              } else {
+                resolve(res);
+              }
+            }
+          )
+      }
+    })
+  }
+
+
+   // Update the identity
   update = async (event) => {
+
     event.stopPropagation();
     event.preventDefault();
-
-
     let name = document.getElementById("name").value;
-    let file = document.querySelector('input[type=file]').files[0]
+    let file = document.getElementById("image").files[0]
+    let address = this.state.address;
+    let contract = this.state.contract;    
+    let previousName = this.state.name;
+    let previousHash = this.state.imageHash;
 
-    // Name can be either '' or something
-    // file can be either undefined or something
+    // 4 permutations as to how you will go about updating your profile.
 
+    if(name !== '' && typeof file === 'undefined') {
+      // case 1
 
+      try {
+        console.log("trying to update user's name");
+        await this.updateUserDetails(contract, address, name, '', 1);
+        this.setState({name, redirect: true});
+      } catch(error) {
+        alert("Unable to update name, please see the developer console.");
+        console.log(error);
+        this.setState({name: previousName, redirect: true});
+      }
+    } else if(name === '' && typeof file !== 'undefined') {
+      // case 2
 
+      let reader = new window.FileReader();
+      reader.readAsArrayBuffer(file);
+      reader.onloadend = async () => {
 
+        const buffer = await Buffer.from(reader.result);
+        let res = await ipfs.files.add(buffer);
+        try {
+          console.log("trying to update user's image hash");
+          await this.updateUserDetails(contract, address, '', res[0].hash, 2);
+          this.setState({imageHash: res[0].hash, redirect: true});
+        } catch(error) {
+          alert("Unable to update image hash, please see the developer console.");
+          console.log(error);
+          this.setState({imageHash: previousHash, redirect: true});
+        }
+      }
+    } else if(name !== '' && typeof file !== 'undefined') {
+      // case 3
+      
+      let reader = new window.FileReader();
+      reader.readAsArrayBuffer(file);
+      reader.onloadend = async () => {
 
+        const buffer = await Buffer.from(reader.result);
+        let res = await ipfs.files.add(buffer);
+        try {
+          console.log("trying to update user's image hash");
+          await this.updateUserDetails(contract, address, name, res[0].hash, 3);
+          this.setState({name, imageHash: res[0].hash, redirect: true});
+        } catch(error) {
+          alert("Unable to update name and image hash, please see the developer console.");
+          console.log(error);
+          this.setState({name: previousName, imageHash: previousHash, redirect: true});
+        }
+      }
+    } else {
+      // case 4
 
-
-
-
-
-
-
-
-
-
-
+      try {
+        console.log("trying to remove user's name and image");
+        await this.updateUserDetails(contract, address, '', '', 4);
+        this.setState({name: '', imageHash: '', redirect: true});
+      } catch(error) {
+        alert("Unable to remove user's name and image, please see the developer console.");
+        console.log(error);
+        this.setState({name: previousName, imageHash: previousHash, redirect: true});
+      } 
+    }
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  getFromIPFS = async(hash) => { 
+
+    if(hash !== '') {
+      // Simulate a call to Dropbox or other service that can
+      // return an image as an ArrayBuffer.
+      var xhr = new XMLHttpRequest();
+
+      // Use JSFiddle logo as a sample image to avoid complicating
+      // this example with cross-domain issues.
+      xhr.open( "GET", "https://gateway.ipfs.io/ipfs/" + hash, true );
+
+      // Ask for the result as an ArrayBuffer.
+      xhr.responseType = "arraybuffer";
+
+      xhr.onload = function( e ) {
+        // Obtain a blob: URL for the image data.
+        var arrayBufferView = new Uint8Array(this.response);
+        var blob = new Blob( [ arrayBufferView ], { type: "image/jpeg" } );
+        var urlCreator = window.URL || window.webkitURL;
+        var imageUrl = urlCreator.createObjectURL( blob );
+        // 
+        var image = document.querySelector('#ipfsImage');
+
+        // Id is unique but className is not. However I used Id in both because if you look at elements, it changes when you go from one page to another i.e. in the source code, there will only ever by 1 id of ipfsImage.
+        image.src = imageUrl;
+      };
+
+      xhr.send();
+    }
+  }
+
+
+
+
+
+  // Update the identity
+  // update = async (event) => {
+
+  //   event.stopPropagation();
+  //   event.preventDefault();
+  //   let name = document.getElementById("name").value;
+  //   let file = document.getElementById("image").files[0]
+    // let address = this.state.address;
+
+
+    // if(name !== '' && typeof file === 'undefined') {
+    //   // If name is not empty but image is
+    //   console.log("name is updated")
+
+    //   await this.state.contract.methods.updateName(name).send(
+    //     {from: address},
+    //     (error, txnHash) => {
+    //       alert("Please give the system some time (10-20 seconds) to reflect your changes before manually refreshing the page. I believe there is a bug here as I am unable to receive the events sent out by these methods.")
+    //     }
+    //   )
+    //   .on('receipt', async (receipt) => {
+    //     console.log("Receipt is:", receipt);
+
+    //     // Updating the state with the new name
+    //     this.setState({name})
+
+    //   })
+    //   .on('error', (error) => {
+    //     // I've tried catching the error but it's a metamask issue. https://github.com/MetaMask/metamask-extension/issues/4431
+    //     console.log("Error is:", error);
+    //     // even though registered is already false, we're setting state again because we want to rerender the page.
+    //   })
+
+
+
+
+
+      
+    // } else if(name === '' && typeof file !== 'undefined') {
+
+    //   // if name is empty but image is not
+    //   console.log("new image is uploaded")
+
+    //   let reader = new window.FileReader();
+    //   reader.readAsArrayBuffer(file);
+    //   reader.onloadend = async () => {
+        
+    //     const buffer = await Buffer.from(reader.result);
+    //     let res = await ipfs.files.add(buffer);
+
+    //     await this.state.contract.methods.updateImageHash(res[0].hash).send(
+    //       {from: address},
+    //       (error, txnHash) => {
+    //         alert("Please give the system some time (10-20 seconds) to reflect your changes before manually refreshing the page. I believe there is a bug here as I am unable to receive the events sent out by these methods.")
+    //       }
+    //     )
+    //     .on('receipt', async (receipt) => {
+    //       console.log("Receipt is:", receipt);
+
+    //       // Updating the state with the new hash
+    //       this.setState({imageHash: res[0].hash})
+    //     })
+    //     .on('error', (error) => {
+    //       // I've tried catching the error but it's a metamask issue. https://github.com/MetaMask/metamask-extension/issues/4431
+    //       console.log("Error is:", error);
+    //       // even though registered is already false, we're setting state again because we want to rerender the page.
+    //     })
+    //   }
+
+      
+    // } else if(name !== '' && typeof file !== 'undefined') {
+    //   // If both name and image are both not empty
+    //   console.log("both name and image are updated");
+
+    //   let reader = new window.FileReader();
+    //   reader.readAsArrayBuffer(file);
+    //   reader.onloadend = async () => {
+
+    //     const buffer = await Buffer.from(reader.result);
+    //     let res = await ipfs.files.add(buffer);
+
+    //     await this.state.contract.methods.updateNameAndImage(name, res[0].hash).send(
+    //       {from: address},
+    //       (error, txnHash) => {
+    //         alert("Please give the system some time (10-20 seconds) to reflect your changes before manually refreshing the page. I believe there is a bug here as I am unable to receive the events sent out by these methods.")
+    //       }
+    //     )
+    //     .on('receipt', async (receipt) => {
+    //       console.log("Receipt is:", receipt);
+
+    //       // Updating the state with the new hash
+    //       this.setState({name, imageHash: res[0].hash})
+    //     })
+    //     .on('error', (error) => {
+    //       // I've tried catching the error but it's a metamask issue. https://github.com/MetaMask/metamask-extension/issues/4431
+    //       console.log("Error is:", error);
+    //       // even though registered is already false, we're setting state again because we want to rerender the page.
+    //     })
+    //   }
+    // } else {
+    //   // If both name and image are both empty
+      
+    //   alert("You can't have an identity without a name and picture!");
+    // }
+      
+  
 
   getContents = (app) => {
     let currPath = window.location.pathname;
@@ -368,6 +717,10 @@ class App extends Component {
     // Getting redirect if any.
     if(prevAddress !== address && currPath !== nextPath) {
       redirect = <Redirect exact from={currPath} to={nextPath}/>
+      console.log(prevAddress)
+      console.log(address)
+      console.log(currPath)
+      console.log(nextPath)
 
     }
 
@@ -380,7 +733,7 @@ class App extends Component {
 
     // When metamask is not enabled and address is undefined (not logged in)
     if(!address) {
-      console.log("mm not enabled")
+      console.log("metamask not enabled, inside getContents")
       // If user is not logged in, display disconnected page
       return (
         <div style =
@@ -412,12 +765,12 @@ class App extends Component {
         </div>
       )
     } else {
-      console.log("metamask enabled");
+      console.log("metamask enabled, inside getContents");
 
 
       // If user is not registered, display new registration page
       if(!app.state.registered){
-        console.log("if not registered")
+        console.log("user not registered, inside getContents")
 
 
         const button = () => {
@@ -475,7 +828,7 @@ class App extends Component {
         )
       } else {
 
-        console.log("if registered")
+        console.log("user registered, inside getContents")
 
         // This is for the very first load.
         this.getFromIPFS(app.state.imageHash)
@@ -548,9 +901,7 @@ class App extends Component {
             </div>
           </div>
         )
-      }
-
-      
+      } 
     }
   }
 
@@ -558,13 +909,13 @@ class App extends Component {
 
   render() { 
 
-    console.log(this.state)
+    console.log("state is:", this.state);
 
     if (!this.state.web3) { 
-      console.log("First initialisation");
+      console.log("First initialisation, inside render");
       return <div>Loading Web3, accounts, and contract...</div>
     } else {
-      console.log("Inside subsequent renders");
+      console.log("Subsequent renders, inside render");
 
       return(
         <Router>
@@ -572,8 +923,10 @@ class App extends Component {
         </Router>
       )
     }
-
   }
+
+
+
 }
 
 

@@ -2,7 +2,7 @@ import Web3 from 'web3'
 
 // Function isnt declared async because it already returns a promise.
 const getWeb3 = () => new Promise((resolve, reject) => {
-  console.log("inside getweb3")
+
   // Wait for loading completion to avoid race conditions with web3 injection timing.
   window.addEventListener('load', () => {
     let web3 = window.web3
