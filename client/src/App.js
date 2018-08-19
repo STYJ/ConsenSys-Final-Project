@@ -152,25 +152,9 @@ class App extends Component {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   /** Utility functions **/
 
-
+  // Helper function to get registration status of the provided address
   getRegistrationStatus = async (contract, address) => {
     return new Promise(function(resolve, reject) {
       contract.isRegistered(
@@ -396,11 +380,7 @@ class App extends Component {
   }
 
 
-
-
-
-
-
+  // Helper function to update user details
   updateUserDetails = async (contract, address, name, hash, choice) => {
     return new Promise(function(resolve, reject) {
       switch(choice) {
@@ -546,24 +526,7 @@ class App extends Component {
   }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  // Get pic from IPFS
   getFromIPFS = async(hash) => { 
 
     if(hash !== '') {
@@ -595,116 +558,6 @@ class App extends Component {
     }
   }
 
-
-
-
-
-  // Update the identity
-  // update = async (event) => {
-
-  //   event.stopPropagation();
-  //   event.preventDefault();
-  //   let name = document.getElementById("name").value;
-  //   let file = document.getElementById("image").files[0]
-    // let address = this.state.address;
-
-
-    // if(name !== '' && typeof file === 'undefined') {
-    //   // If name is not empty but image is
-    //   console.log("name is updated")
-
-    //   await this.state.contract.methods.updateName(name).send(
-    //     {from: address},
-    //     (error, txnHash) => {
-    //       alert("Please give the system some time (10-20 seconds) to reflect your changes before manually refreshing the page. I believe there is a bug here as I am unable to receive the events sent out by these methods.")
-    //     }
-    //   )
-    //   .on('receipt', async (receipt) => {
-    //     console.log("Receipt is:", receipt);
-
-    //     // Updating the state with the new name
-    //     this.setState({name})
-
-    //   })
-    //   .on('error', (error) => {
-    //     // I've tried catching the error but it's a metamask issue. https://github.com/MetaMask/metamask-extension/issues/4431
-    //     console.log("Error is:", error);
-    //     // even though registered is already false, we're setting state again because we want to rerender the page.
-    //   })
-
-
-
-
-
-      
-    // } else if(name === '' && typeof file !== 'undefined') {
-
-    //   // if name is empty but image is not
-    //   console.log("new image is uploaded")
-
-    //   let reader = new window.FileReader();
-    //   reader.readAsArrayBuffer(file);
-    //   reader.onloadend = async () => {
-        
-    //     const buffer = await Buffer.from(reader.result);
-    //     let res = await ipfs.files.add(buffer);
-
-    //     await this.state.contract.methods.updateImageHash(res[0].hash).send(
-    //       {from: address},
-    //       (error, txnHash) => {
-    //         alert("Please give the system some time (10-20 seconds) to reflect your changes before manually refreshing the page. I believe there is a bug here as I am unable to receive the events sent out by these methods.")
-    //       }
-    //     )
-    //     .on('receipt', async (receipt) => {
-    //       console.log("Receipt is:", receipt);
-
-    //       // Updating the state with the new hash
-    //       this.setState({imageHash: res[0].hash})
-    //     })
-    //     .on('error', (error) => {
-    //       // I've tried catching the error but it's a metamask issue. https://github.com/MetaMask/metamask-extension/issues/4431
-    //       console.log("Error is:", error);
-    //       // even though registered is already false, we're setting state again because we want to rerender the page.
-    //     })
-    //   }
-
-      
-    // } else if(name !== '' && typeof file !== 'undefined') {
-    //   // If both name and image are both not empty
-    //   console.log("both name and image are updated");
-
-    //   let reader = new window.FileReader();
-    //   reader.readAsArrayBuffer(file);
-    //   reader.onloadend = async () => {
-
-    //     const buffer = await Buffer.from(reader.result);
-    //     let res = await ipfs.files.add(buffer);
-
-    //     await this.state.contract.methods.updateNameAndImage(name, res[0].hash).send(
-    //       {from: address},
-    //       (error, txnHash) => {
-    //         alert("Please give the system some time (10-20 seconds) to reflect your changes before manually refreshing the page. I believe there is a bug here as I am unable to receive the events sent out by these methods.")
-    //       }
-    //     )
-    //     .on('receipt', async (receipt) => {
-    //       console.log("Receipt is:", receipt);
-
-    //       // Updating the state with the new hash
-    //       this.setState({name, imageHash: res[0].hash})
-    //     })
-    //     .on('error', (error) => {
-    //       // I've tried catching the error but it's a metamask issue. https://github.com/MetaMask/metamask-extension/issues/4431
-    //       console.log("Error is:", error);
-    //       // even though registered is already false, we're setting state again because we want to rerender the page.
-    //     })
-    //   }
-    // } else {
-    //   // If both name and image are both empty
-      
-    //   alert("You can't have an identity without a name and picture!");
-    // }
-      
-  
 
   getContents = (app) => {
     let currPath = window.location.pathname;
