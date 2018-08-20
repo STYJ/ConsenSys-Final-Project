@@ -470,7 +470,7 @@ class App extends Component {
       } catch(error) {
         alert("Unable to update name, please see the developer console.");
         console.log(error);
-        this.setState({name: previousName, redirect: true});
+        // this.setState({name: previousName, redirect: true});
       }
     } else if(name === '' && typeof file !== 'undefined') {
       // case 2
@@ -507,7 +507,7 @@ class App extends Component {
         } catch(error) {
           alert("Unable to update name and image hash, please see the developer console.");
           console.log(error);
-          this.setState({name: previousName, imageHash: previousHash, redirect: true});
+          // this.setState({name: previousName, imageHash: previousHash, redirect: true});
         }
       }
     } else {
@@ -520,7 +520,7 @@ class App extends Component {
       } catch(error) {
         alert("Unable to remove user's name and image, please see the developer console.");
         console.log(error);
-        this.setState({name: previousName, imageHash: previousHash, redirect: true});
+        // this.setState({name: previousName, imageHash: previousHash, redirect: true});
       } 
     }
   }
