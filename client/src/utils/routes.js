@@ -26,11 +26,15 @@ export const connectedRoutes = [
   },
   {
     path: "/requestApproval",
-    main: () => <h2>Please enter an address here to request for their approval.</h2>
+    main: () => <h2>Placeholder text</h2>
   },
   {
     path: "/pendingApproval",
-    main: () => <h2>These are the addresses pending your approval</h2>
+    main: () => <h2>Placeholder text</h2>
+  },
+  {
+    path: "/getDetails",
+    main: () => <h2>Placeholder text</h2>
   },
   {
     path: "/about",

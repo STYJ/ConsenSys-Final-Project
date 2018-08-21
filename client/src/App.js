@@ -5,7 +5,6 @@ import ipfs from './utils/getIPFS'
 import getContractInstance from './utils/getContractInstance'
 import contractDefinition from './contracts/UserRegistry.json'
 
-
 import {
   BrowserRouter as Router,
   Route,
@@ -22,6 +21,9 @@ import {
 
 
 class App extends Component {
+
+  // if got time, move all the constants out to another file.
+  // redo the registration too. newRegistratio -> completeRegistration page. Sign 2 txn. Add note on newRegistration to tell them that you will be required to sign 2 transactions, 1 to create the account and 2 to update your details. = means your getRoute must change liao, add 1 more flag called completeRegistration. Walao -.-
 
   // Note that an asynchronous call to fetch data will not return until a render has occured so that means you'll always need to render with empty / initial data at least once. This is why the render has a !null check. 
   constructor(props){
@@ -48,10 +50,16 @@ class App extends Component {
     this.createUser = this.createUser.bind(this);
     this.uploadToIPFS = this.uploadToIPFS.bind(this);
     this.register = this.register.bind(this);
-
     this.updateUserDetails = this.updateUserDetails.bind(this);
     this.update = this.update.bind(this);
     this.getFromIPFS = this.getFromIPFS.bind(this);
+
+    this.request = this.request.bind(this);
+    this.requestForApproval = this.requestForApproval.bind(this);
+    this.getApprovalRequests = this.getApprovalRequests.bind(this);
+    this.getAllRequests = this.getAllRequests.bind(this);
+    this.view = this.view.bind(this);
+    this.getIdentityFrom = this.getIdentityFrom.bind(this);
 
   }
 
@@ -65,8 +73,6 @@ class App extends Component {
         console.log('rerendering to get rid of redirect')
         this.setState({redirect: false})
       }
-
-
   }
 
   // This function is only run once when the component is mounted for the first time
@@ -159,7 +165,7 @@ class App extends Component {
     return new Promise(function(resolve, reject) {
       contract.isRegistered(
         address,
-        {from:address},
+        {from: address},
         function(err, res){
           if(err) {
             reject(err);
@@ -203,35 +209,112 @@ class App extends Component {
     } else {
       route = connectedRoutes
 
-      // Updating routes
-      route[0].main = () => 
-      <div>
-        <h2>Welcome back {this.state.name}! Your imageHash is {this.state.imageHash} </h2>
-        <img id="ipfsImage" src='' alt='this is a pic that you uploaded previously'></img>
-      </div>
 
-      route[1].main = () =>
-      <div>
-        <h2>Update your details here!</h2>
-        <form onSubmit={this.update}>
-          <label align="left">
-            Current Name: {this.state.name} <br/>
-            New Name:<input placeholder="Your new name" type="text" id="name"/>
-          </label>
-          <br/>
-          <label>
-            Old Image:
-            <img id="ipfsImage" src='' alt='this is a pic that you uploaded previously'></img> 
+      // Updating routes
+      route[0].main = () => {
+        let text = <h2>Please update your details</h2>;
+        let updatedText = <h2>Welcome back {this.state.name}!</h2>
+        return (
+          <div>
+            {(this.state.name === '') && text}
+            {(this.state.name !== '') && updatedText}
+          </div>)
+      }
+      route[1].main = () => {
+        return (
+          <div>
+            <h2>Update your details here!</h2>
+            <form onSubmit={this.update}>
+              <img id="ipfsImage" src='' alt='Your picture cannot be found, please upload a new pic.'></img> 
+              <br/>
+              <label>
+                Current Name: {this.state.name} <br/>
+                New Name:<input placeholder="Enter your new name" type="text" id="name" size='20' maxLength='20'/>
+                <br/>
+                New Image:
+                <input type="file" id="image"/>
+              </label>
+              <br/>
+              <button>Update Identity</button>
+            </form>
+          </div>
+        )
+      }
+      route[2].main = () => {
+        return (
+          <div>
+            <h2>Please enter an address here to request for their approval.</h2>
+            <form onSubmit={this.request}>
+              <label>
+                Request approval from <input placeholder="Enter requestee's address here" type="text" id="address" size='42' maxLength='42'/> 
+              </label>
+              <br/>
+              <button>Request for Approval</button>
+            </form>
+          </div>
+        )
+      }
+
+      route[3].main = () => {
+
+
+        return (
+
+          <div>
+            <table id="pendingApprovalTable">
+              <thead >
+                <tr>
+                  <th>&nbsp;</th>
+                  <th>Address</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td><input type="checkbox" />&nbsp;</td>
+                  <td>address 1</td>
+                  <td>
+                    <table>
+                      <tbody>
+                        <tr>
+                          <td><button>Approve</button></td>
+                          <td><button>Reject</button></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>  
+            </table>
+            <button onClick={()=>console.log('hi')}>Approve Selected</button>
+            <button>Reject Selected</button>
+
+          </div>
+        )
+      }
+      route[4].main = () => {
+        return (
+          <div>
+            <h2>Please enter an address here to view their details.</h2>
+            <form onSubmit={this.view}>
+              <label>
+                View details of <input placeholder="Enter requestee's address here" type="text" id="address" size='42' maxLength='42'/> 
+              </label>
+              <button>View details</button>
+            </form>
+
+            <img id="ipfsImage" src=''></img> 
             <br/>
-            New Image:
-            <input placeholder="Your image" type="file" id="image"/>
-          </label>
-          <br/>
-          <button>Update Identity</button>
-        </form>
-      </div>
+            <label id="name">
+              <label id="output">
+              </label>
+            </label>
+            <br/>
+          </div>
+        )
+      }
     }
-    
     return route;
   }
 
@@ -242,80 +325,82 @@ class App extends Component {
     let address = props.selectedAddress;
     let registered
 
-    try {
-      console.log("SCB, trying to get registration status");
-      registered = await this.getRegistrationStatus(contract, address);
-    } catch(error) {
-      alert("Unable to get registration status, please see the developer console.")
-      console.log(error)
-    }
-    console.log("SCB, registered:", registered)
+    if(typeof address !== 'undefined') {
+      // USer is still logged into metamask
+      console.log("SCB, User logged into or is still connected to metamask")
 
-    let route = await this.getRoute(address, registered);
+      try {
+        console.log("SCB, trying to get registration status");
+        registered = await this.getRegistrationStatus(contract, address);
+      } catch(error) {
+        alert("Unable to get registration status, please see the developer console.")
+        console.log(error)
+      }
+      console.log("SCB, registered:", registered)
 
-    // This if is to handle the event when you logout and you try to log back in. The address will be '' so when you try to do this.state.address.toLowerCase(), it'll fail. 
+      let route = await this.getRoute(address, registered);
 
-    // This is to handle the many times when this event is triggered even though nothing has changed. Try console.log(props)
-    if(typeof this.state.address !== 'undefined') {
-      if(address !== this.state.address.toLowerCase()){
-        if(this.state.address) {
-          console.log("SCB, User is still logged in")
+      // if(typeof this.state.address !== 'undefined') {
 
-          // User is still logged in
-          if(typeof address !== 'undefined') {
 
-            let name, imageHash;
-            if(registered) {
-              let result;
-              try {
-                console.log("SCB, trying to get my identity");
-                result = await this.getMyIdentity(contract, address);
-                name = result[0];
-                imageHash = result[1];
-              } catch(error) {
-                console.log("Unable to get identity, please see the developer console")
-                console.log(error)
+        // if(address !== this.state.address.toLowerCase()){
+          if(this.state.address) {
+            console.log("SCB, User was previously logged in on Metamask")
+            if(address !== this.state.address.toLowerCase()){
+              console.log("SCB, user switched accounts")
+              let name, imageHash;
+              if(registered) {
+                let result;
+                try {
+                  console.log("SCB, trying to get my identity");
+                  result = await this.getMyIdentity(contract, address);
+                  name = result[0];
+                  imageHash = result[1];
+                } catch(error) {
+                  console.log("Unable to get identity, please see the developer console")
+                  console.log(error)
+                }
+                console.log("SCB, Name:", name);
+                console.log("SCB, imageHash:", imageHash);
+                console.log("SCB, User is changing metamask accounts")
               }
-              console.log("SCB, Name:", name);
-              console.log("SCB, imageHash:", imageHash);
-            } 
 
-            console.log("SCB, User is changing metamask accounts")
-            // Update with new address and update routes to reflect address.
-
+              // Update with new address and update routes to reflect address.
+              this.setState((prevState) => ({
+                address,
+                prevAddress: prevState.address,
+                route,
+                registered, 
+                redirect: true,
+                name,
+                imageHash
+              }))
+            }
+          } else {
+            // User is relogging into metamask
+            console.log("SCB, User is relogging into metamask")
             this.setState((prevState) => ({
               address,
               prevAddress: prevState.address,
               route,
-              registered, 
-              redirect: true,
-              name,
-              imageHash
-            }))
-          } else {
-            console.log("SCB, User has logged out")
-            // User logged out
-            this.setState((prevState) => ({
-              address: '',
-              prevAddress: prevState.address,
-              route: disconnectedRoute,
-              registered: false,
-              redirect: true,
-              name: '',
-              imageHash: ''
+              registered,
+              redirect: true
             }))
           }
-        } else {
-          console.log("SCB, User is relogging in")
-          this.setState((prevState) => ({
-            address,
-            prevAddress: prevState.address,
-            route,
-            registered,
-            redirect: true
-          }))
-        }
-      }   
+        // }
+      // }
+    } else {
+      // User logged out
+      console.log("SCB, User has logged out out of metamask")
+      this.setState((prevState) => ({
+        address: '',
+        prevAddress: prevState.address,
+        route: disconnectedRoute,
+        registered: false,
+        redirect: true,
+        name: '',
+        imageHash: ''
+      }))
     }
   }
 
@@ -325,7 +410,7 @@ class App extends Component {
       contract.createUser(
         name,
         hash,
-        {from:address},
+        {from: address},
         function(err, res){
           if(err) {
             reject(err);
@@ -340,10 +425,6 @@ class App extends Component {
 
   uploadToIPFS = async (app, reader, name, address) => {
     const buffer = await Buffer.from(reader.result);
-    
-    // Logic here a bit wonky. You should sign transaction then add to ipfs.
-    // Once you get the hash, then update the function arguments? But i don't know how to alter function parameters after the transaction is signed. 
-    // https://itnext.io/build-a-simple-ethereum-interplanetary-file-system-ipfs-react-js-dapp-23ff4914ce4e
     let res = await ipfs.files.add(buffer);
 
     try {
@@ -356,7 +437,7 @@ class App extends Component {
       
       this.setState({name, imageHash: res[0].hash, registered, route})
     } catch(error) {
-      alert("unable to upload image to IPFS, please see the developer console.")
+      alert("Error processing your file, please see the developer console.")
       console.log(error)
       this.setState({registered: false})
     }
@@ -432,7 +513,7 @@ class App extends Component {
             '',
             '',
             {from: address,
-             gas: 3000000},
+             gas: 300000},
             function(err, res){
               if(err) {
                 reject(err);
@@ -446,7 +527,7 @@ class App extends Component {
   }
 
 
-   // Update the identity
+  // Update the identity
   update = async (event) => {
 
     event.stopPropagation();
@@ -454,9 +535,7 @@ class App extends Component {
     let name = document.getElementById("name").value;
     let file = document.getElementById("image").files[0]
     let address = this.state.address;
-    let contract = this.state.contract;    
-    let previousName = this.state.name;
-    let previousHash = this.state.imageHash;
+    let contract = this.state.contract;
 
     // 4 permutations as to how you will go about updating your profile.
 
@@ -470,7 +549,6 @@ class App extends Component {
       } catch(error) {
         alert("Unable to update name, please see the developer console.");
         console.log(error);
-        // this.setState({name: previousName, redirect: true});
       }
     } else if(name === '' && typeof file !== 'undefined') {
       // case 2
@@ -478,7 +556,6 @@ class App extends Component {
       let reader = new window.FileReader();
       reader.readAsArrayBuffer(file);
       reader.onloadend = async () => {
-
         const buffer = await Buffer.from(reader.result);
         let res = await ipfs.files.add(buffer);
         try {
@@ -488,7 +565,6 @@ class App extends Component {
         } catch(error) {
           alert("Unable to update image hash, please see the developer console.");
           console.log(error);
-          this.setState({imageHash: previousHash, redirect: true});
         }
       }
     } else if(name !== '' && typeof file !== 'undefined') {
@@ -497,7 +573,6 @@ class App extends Component {
       let reader = new window.FileReader();
       reader.readAsArrayBuffer(file);
       reader.onloadend = async () => {
-
         const buffer = await Buffer.from(reader.result);
         let res = await ipfs.files.add(buffer);
         try {
@@ -507,7 +582,6 @@ class App extends Component {
         } catch(error) {
           alert("Unable to update name and image hash, please see the developer console.");
           console.log(error);
-          // this.setState({name: previousName, imageHash: previousHash, redirect: true});
         }
       }
     } else {
@@ -520,7 +594,6 @@ class App extends Component {
       } catch(error) {
         alert("Unable to remove user's name and image, please see the developer console.");
         console.log(error);
-        // this.setState({name: previousName, imageHash: previousHash, redirect: true});
       } 
     }
   }
@@ -550,14 +623,145 @@ class App extends Component {
         // 
         var image = document.querySelector('#ipfsImage');
 
-        // Id is unique but className is not. However I used Id in both because if you look at elements, it changes when you go from one page to another i.e. in the source code, there will only ever by 1 id of ipfsImage.
-        image.src = imageUrl;
+        if(image !== null) {
+          // Id is unique but className is not. However I used Id in both because if you look at elements, it changes when you go from one page to another i.e. in the source code, there will only ever by 1 id of ipfsImage.
+         image.src = imageUrl;
+        } 
       };
 
       xhr.send();
     }
   }
 
+
+  requestForApproval = async (contract, requester, requestee) => {
+    return new Promise(function(resolve, reject) {
+      contract.requestForApproval(
+        requestee,
+        {from: requester},
+        function(err, res){
+          if(err) {
+            reject(err);
+          } else {
+            resolve(res);
+          }
+        }
+      )
+    })
+  }
+
+  request = async (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+
+    let requestee = document.getElementById("address").value;
+    let requester = this.state.address;
+    let contract = this.state.contract;
+
+    // Need to check that the address length is 42. Anything shorter and it's not a valid address.
+    if(requestee.length === 42) {
+      try {
+        console.log("trying to request for approval from a user");
+        await this.requestForApproval(contract, requester, requestee);
+        this.setState({redirect: true});
+      } catch(error) {
+        alert("Unable to request for approval, please see the developer console.");
+        console.log(error);
+      }
+    } else {
+      alert("Please check your address and try again.")
+    }
+  }
+
+  getApprovalRequests = async (contract, address) => {
+    return new Promise(function(resolve, reject) {
+      contract.getApprovalRequests(
+        {from: address},
+        function(err, res){
+          if(err) {
+            reject(res);
+          } else {
+            resolve(res);
+          }
+        }
+      )
+    })
+  }
+
+  getAllRequests = async (event) => {
+    let address = this.state.address;
+    let contract = this.state.contract;
+
+    try {
+      console.log("trying to get all approval requests");
+      let result = await this.getApprovalRequests(contract, address);
+      let addresses = result[0];
+      let numAddresses = result[1];
+      console.log(addresses);
+      console.log("num addresses", numAddresses);
+
+    } catch(error) {
+
+      alert("Unable to get approval requests, please see the developer console.");
+      console.log(error);
+    }
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  getIdentityFrom = async (contract, requester, requestee) => {
+    return new Promise(function(resolve, reject) {
+      contract.getIdentityFrom(
+        requestee,
+        {from: requester},
+        function(err, res){
+          if(err) {
+            reject(err);
+          } else {
+            resolve(res);
+          }
+        }
+      )
+    })
+  }
+
+  view = async (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+
+    let requestee = document.getElementById("address").value;
+    let requester = this.state.address;
+    let contract = this.state.contract;
+
+    try {
+      console.log("trying to retrieve identity of requestee");
+      let result = await this.getIdentityFrom(contract, requester, requestee);
+      let name = result[0];
+      let imageHash = result[1];
+      document.getElementById("name").innerHTML = "Name:"
+      document.getElementById("output").innerHTML = name;
+      await this.getFromIPFS(imageHash)
+
+    } catch(error) {
+      alert("Unable to get identity, please see the developer console.")
+      console.log(error)
+    }
+  }
 
   getContents = (app) => {
     let currPath = window.location.pathname;
@@ -576,8 +780,6 @@ class App extends Component {
       console.log(nextPath)
 
     }
-
-
     // 4 scenarios
     // When root page and not logged in => Redirect to disconnect
     // When root page and logged in => Redirect to connected
@@ -683,9 +885,6 @@ class App extends Component {
 
         console.log("user registered, inside getContents")
 
-        // This is for the very first load.
-        this.getFromIPFS(app.state.imageHash)
-
         // If user is registered, display connected page
         return (
           <div style =
@@ -713,18 +912,25 @@ class App extends Component {
                 }}
               >
                 <li>
-                  <Link to="/home" onClick={()=>
-        this.getFromIPFS(app.state.imageHash)}>Home</Link>
+                  <Link to="/home">Home</Link>
                 </li>
                 <li>
-                  <Link to="/updateDetails" onClick={()=>
-        this.getFromIPFS(app.state.imageHash)}>Update Details</Link>
+                  <Link to="/updateDetails" onClick={() =>
+                    this.getFromIPFS(app.state.imageHash)}>
+                    Update your Details
+                  </Link>
                 </li>
                 <li>
                   <Link to="/requestApproval">Request for Approval</Link>
                 </li>
                 <li>
-                  <Link to="/pendingApproval">Pending your Approval</Link>
+                  <Link to="/pendingApproval" onClick={() => 
+                    this.getAllRequests(this.state.address)}>
+                    Pending your Approval
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/getDetails">Get someone's Details</Link>
                 </li>
                 <li>
                   <Link to="/about">About</Link>

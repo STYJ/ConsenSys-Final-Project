@@ -1,4 +1,9 @@
 Assuming fresh installation of ubuntu 16.04
+
+###############
+# Basic setup #
+###############
+
 1. Install nvm with the following command:
 	curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
 2. Close current terminal and open a new one.
@@ -6,21 +11,32 @@ Assuming fresh installation of ubuntu 16.04
 	command -v nvm
 4. Install node with the following command:
 	nvm install node
-5. Install react, react-router, react-router-dom with the following command:
-	npm install react react-router react-router-dom --save
-6. Install ganache-cli with the following command:
-	npm install -g ganache-cli
-7. Install truffle with the following command:
-	npm install -g truffle
+5. Install ganache-cli with the following command:
+	npm install -g ganache-cli -s
+6. Install truffle with the following command:
+	npm install -g truffle -s
+7. Install IPFS with the the following command:
+	npm install -g ipfs -s
 
+###########
+# To test #
+###########
 
+1. Run ganache-cli in one terminal
+2. Open another terminal, navigate to the clients folder and do truffle test.
 
-To play around, do this.
+#######################################################
+# To interact with the dapp, please do the following. #
+#######################################################
 
-0) run ganache-cli and then navigate to the contracts folder and do truffle compile and truffle migrate
-1) cd Client, npm install
-2) type ipfs config Addresses.API in terminal and check that it returns "/ip4/127.0.0.1/tcp/5001", else run ipfs config Addresses.API /ip4/127.0.0.1/tcp/5001
-3) run ipfs daemon with the command ipfs daemon
-4) open browser with metamask and change provider to local host 8545, import some accounts.
-5) npm start inside client folder
-6) play around.
+1. Run ganache-cli and connect metamask to ganache (under settings, new RPC url, enter http://127.0.0.1:8545)
+2. Import as many accounts as you'd like to Metamask
+3. Navigate to the root folder (there should be a contracts folder in this folder) and do "truffle compile" followed by "truffle migrate"
+4. Open a new terminal and run ipfs init followed by the following commands:
+
+	ipfs config Addresses.API /ip4/127.0.0.1/tcp/5001
+	ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["*"]'
+	ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["PUT", "GET", "POST"]'
+
+5. Navigate into your client folder and do npm start
+6. Have fun! 
