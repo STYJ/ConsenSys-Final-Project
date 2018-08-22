@@ -34,13 +34,15 @@ class App extends Component {
 
       redirect: true,
       prevAddress: null,
-      prevPath: null,
       address: null,
       route: null,
-      registered: false,
+      registered: null,
 
-      name: '',
-      imageHash: ''
+      name: null,
+      imageHash: null,
+
+      approvalRequests: null,
+      numApprovalRequests: null
     }
     this.getRegistrationStatus = this.getRegistrationStatus.bind(this)
     this.getMyIdentity = this.getMyIdentity.bind(this)
@@ -53,11 +55,14 @@ class App extends Component {
     this.updateUserDetails = this.updateUserDetails.bind(this);
     this.update = this.update.bind(this);
     this.getFromIPFS = this.getFromIPFS.bind(this);
-
     this.request = this.request.bind(this);
     this.requestForApproval = this.requestForApproval.bind(this);
     this.getApprovalRequests = this.getApprovalRequests.bind(this);
-    this.getAllRequests = this.getAllRequests.bind(this);
+
+
+    this.approveRequester = this.approveRequester.bind(this);
+    this.unapproveRequester = this.unapproveRequester.bind(this);
+
     this.view = this.view.bind(this);
     this.getIdentityFrom = this.getIdentityFrom.bind(this);
 
@@ -106,11 +111,12 @@ class App extends Component {
         console.log("inside componentDidMount, registered:": registered)
       }
 
-      
-
       // Getting identity if registration exists
-      let name='';
-      let imageHash='';
+      let route = null;
+      let name = null;
+      let imageHash = null;
+      let approvalRequests = null;
+      let numApprovalRequests = null;
 
       if(registered) {
         let result;
@@ -125,10 +131,20 @@ class App extends Component {
         }
         console.log("inside componentDidMount, Name:", name);
         console.log("inside componentDidMount, imageHash:", imageHash);
+
+        try {
+          console.log("SCB, trying to get all approval requests");
+          let requestResult = await this.getApprovalRequests(contract, address);
+          approvalRequests = requestResult[0];
+          numApprovalRequests = requestResult[1].c[0];
+        } catch(error) {
+          alert("Unable to get approval requests, please see the developer console.");
+          console.log(error);
+        }
       }
 
       // Get route after getting accounts
-      const route = await this.getRoute(address, registered)
+      route = await this.getRoute(address, registered)
 
       // Set web3, accounts, routes and contract to the state then subscribe to publicConfigStore
       // Once componentDidMount is completed, componentDidUpdate is called. 
@@ -140,7 +156,9 @@ class App extends Component {
         route,
         registered,
         name,
-        imageHash
+        imageHash,
+        approvalRequests,
+        numApprovalRequests
       }, () => {
         console.log("inside componentDidMount, subscribing to public config store ");
         this.state.web3.currentProvider.publicConfigStore.on(
@@ -176,8 +194,6 @@ class App extends Component {
       )
     })
   }
-
-
 
   getMyIdentity = async (contract, address) => {
     return new Promise(function(resolve, reject) {
@@ -257,41 +273,84 @@ class App extends Component {
 
       route[3].main = () => {
 
+        if(this.state.numApprovalRequests !== 0){
+          let table = [];
+          for(let i = 0; i < this.state.numApprovalRequests; i ++){
+            table.push(
+              <tr key={i} id={"row " + i}>
+                <td>{this.state.approvalRequests[i]}</td>
+                <td>
+                  <table name="Actions table">
+                    <tbody>
+                      <tr>
+                        <td><button onClick = {
+                          async () => {
+                            console.log("approving requester")
 
-        return (
+                            try {
+                              await this.approveRequester(
+                                this.state.contract,
+                                this.state.approvalRequests[i],
+                                this.state.address
+                              )
 
-          <div>
-            <table id="pendingApprovalTable">
-              <thead >
-                <tr>
-                  <th>&nbsp;</th>
-                  <th>Address</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
+                              alert("Requester " + this.state.approvalRequests[i] + " has been approved. Unfortunately, I am not able to redirect my page properly after requests are approved so I will need your help to manually refresh the browser.")
+                            } catch(error) {
+                              alert("Unable to approve request, please see the developer console.");
+                              console.log(error);
+                            }
+                          }
+                        }>Approve</button></td>
+                        <td><button onClick = {
+                          async () => {
+                            console.log("rejecting requester")
 
-              <tbody>
-                <tr>
-                  <td><input type="checkbox" />&nbsp;</td>
-                  <td>address 1</td>
-                  <td>
-                    <table>
-                      <tbody>
-                        <tr>
-                          <td><button>Approve</button></td>
-                          <td><button>Reject</button></td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </td>
-                </tr>
-              </tbody>  
-            </table>
-            <button onClick={()=>console.log('hi')}>Approve Selected</button>
-            <button>Reject Selected</button>
+                            try {
+                              await this.unapproveRequester(
+                                this.state.contract,
+                                this.state.approvalRequests[i],
+                                this.state.address
+                              )
 
-          </div>
-        )
+                              alert("Requester " + this.state.approvalRequests[i] + " has been rejected. Unfortunately, I am not able to redirect my page properly after requests are rejected so I will need your help to manually refresh the browser.")
+                            } catch(error) {
+                              alert("Unable to reject request, please see the developer console.");
+                              console.log(error);
+                            }
+                          }
+                        }>Reject</button></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            )
+          }
+          // can add <th>&nbsp;</th> and <td><input type="checkbox" id={i}/>&nbsp;</td> if you want checkbox. If got time, get the approve / unapprove multiple commands working.
+
+          // <button>Approve Selected</button>
+          // <button>Reject Selected</button>
+          return (
+
+            <div>
+              <table id="Approval Requests table">
+                <thead >
+                  <tr>
+                    <th>Address</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {table}
+                </tbody>  
+              </table>
+            </div>
+          )
+        } else {
+          return (<h2>There are no requests pending your approval!</h2>)
+        }
+
+
       }
       route[4].main = () => {
         return (
@@ -306,9 +365,9 @@ class App extends Component {
 
             <img id="ipfsImage" src=''></img> 
             <br/>
-            <label id="name">
-              <label id="output">
-              </label>
+            <label id="name">  
+            </label>
+            <label id="output">
             </label>
             <br/>
           </div>
@@ -323,11 +382,18 @@ class App extends Component {
 
     let contract = this.state.contract;
     let address = props.selectedAddress;
-    let registered
+    let registered = null;
 
+    // Check if user is currently logged in or out
     if(typeof address !== 'undefined') {
-      // USer is still logged into metamask
-      console.log("SCB, User logged into or is still connected to metamask")
+      console.log("SCB, User is currently logged into metamask")
+
+      // Getting details of account
+      let route = null;
+      let name = null;
+      let imageHash = null;
+      let approvalRequests = null;
+      let numApprovalRequests = null;
 
       try {
         console.log("SCB, trying to get registration status");
@@ -338,72 +404,83 @@ class App extends Component {
       }
       console.log("SCB, registered:", registered)
 
-      let route = await this.getRoute(address, registered);
+      // Getting route
+      route = await this.getRoute(address, registered);
 
-      // if(typeof this.state.address !== 'undefined') {
+      // Only check for details if registered
+      if(registered) {
+        try {
+          console.log("SCB, trying to get my identity");
+          let result = await this.getMyIdentity(contract, address);
+          name = result[0];
+          imageHash = result[1];
+        } catch(error) {
+          console.log("Unable to get identity, please see the developer console")
+          console.log(error)
+        }
+        console.log("SCB, Name:", name);
+        console.log("SCB, imageHash:", imageHash);
 
+        try {
+          console.log("SCB, trying to get all approval requests");
+          let requestResult = await this.getApprovalRequests(contract, address); // for some weird reason this one is not updating!!
+          approvalRequests = requestResult[0];
+          numApprovalRequests = requestResult[1].c[0];
+        } catch(error) {
+          alert("Unable to get approval requests, please see the developer console.");
+          console.log(error);
+        }
+      }
 
-        // if(address !== this.state.address.toLowerCase()){
-          if(this.state.address) {
-            console.log("SCB, User was previously logged in on Metamask")
-            if(address !== this.state.address.toLowerCase()){
-              console.log("SCB, user switched accounts")
-              let name, imageHash;
-              if(registered) {
-                let result;
-                try {
-                  console.log("SCB, trying to get my identity");
-                  result = await this.getMyIdentity(contract, address);
-                  name = result[0];
-                  imageHash = result[1];
-                } catch(error) {
-                  console.log("Unable to get identity, please see the developer console")
-                  console.log(error)
-                }
-                console.log("SCB, Name:", name);
-                console.log("SCB, imageHash:", imageHash);
-                console.log("SCB, User is changing metamask accounts")
-              }
+      // Check if user was previously logged in
+      if(this.state.address) {
+        console.log("SCB, user was previously logged in on metamask")
 
-              // Update with new address and update routes to reflect address.
-              this.setState((prevState) => ({
-                address,
-                prevAddress: prevState.address,
-                route,
-                registered, 
-                redirect: true,
-                name,
-                imageHash
-              }))
-            }
-          } else {
-            // User is relogging into metamask
-            console.log("SCB, User is relogging into metamask")
-            this.setState((prevState) => ({
-              address,
-              prevAddress: prevState.address,
-              route,
-              registered,
-              redirect: true
-            }))
-          }
-        // }
-      // }
+        // Check new account details (if account didnt change, pass on trigger)
+        if(address !== this.state.address.toLowerCase()){
+          console.log("SCB, user switched accounts")
+          this.setState({
+            address,
+            prevAddress: this.state.address,
+            route,
+            registered,
+            redirect: true,
+            name,
+            imageHash,
+            approvalRequests,
+            numApprovalRequests
+          })
+        } 
+      } else {
+        console.log("SCB, user was not previously logged in on metamask")
+        this.setState({
+          address,
+          prevAddress: this.state.address,
+          route,
+          registered,
+          redirect: true,
+          name,
+          imageHash,
+          approvalRequests,
+          numApprovalRequests
+        })
+      }
     } else {
       // User logged out
       console.log("SCB, User has logged out out of metamask")
       this.setState((prevState) => ({
-        address: '',
-        prevAddress: prevState.address,
+        address: null,
+        prevAddress: this.state.address,
         route: disconnectedRoute,
-        registered: false,
+        registered: null,
         redirect: true,
-        name: '',
-        imageHash: ''
+        name: null,
+        imageHash: null,
+        approvalRequests: null,
+        numApprovalRequests: null
       }))
     }
   }
-
 
   createUser = async (contract, address, name, hash) => {
     return new Promise(function(resolve, reject) {
@@ -433,9 +510,11 @@ class App extends Component {
       console.log("user is created! inside uploadToIPFS")
 
       let registered = true;
+      let approvalRequests = ["0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000"]
+      let numApprovalRequests = 0;
       let route = await this.getRoute(address, registered);
       
-      this.setState({name, imageHash: res[0].hash, registered, route})
+      this.setState({registered, route, name, imageHash: res[0].hash, approvalRequests, numApprovalRequests})
     } catch(error) {
       alert("Error processing your file, please see the developer console.")
       console.log(error)
@@ -545,6 +624,7 @@ class App extends Component {
       try {
         console.log("trying to update user's name");
         await this.updateUserDetails(contract, address, name, '', 1);
+        alert("Name has been updated! The page will redirect to the home page once you click 'Ok'");
         this.setState({name, redirect: true});
       } catch(error) {
         alert("Unable to update name, please see the developer console.");
@@ -561,6 +641,7 @@ class App extends Component {
         try {
           console.log("trying to update user's image hash");
           await this.updateUserDetails(contract, address, '', res[0].hash, 2);
+          alert("Pic has been updated! The page will redirect to the home page once you click 'Ok'");
           this.setState({imageHash: res[0].hash, redirect: true});
         } catch(error) {
           alert("Unable to update image hash, please see the developer console.");
@@ -578,6 +659,7 @@ class App extends Component {
         try {
           console.log("trying to update user's image hash");
           await this.updateUserDetails(contract, address, name, res[0].hash, 3);
+          alert("Name and Pic has been updated! The page will redirect to the home page once you click 'Ok'");
           this.setState({name, imageHash: res[0].hash, redirect: true});
         } catch(error) {
           alert("Unable to update name and image hash, please see the developer console.");
@@ -590,6 +672,7 @@ class App extends Component {
       try {
         console.log("trying to remove user's name and image");
         await this.updateUserDetails(contract, address, '', '', 4);
+        alert("Name and Pic has been removed. The page will redirect to the home page once you click 'Ok'");
         this.setState({name: '', imageHash: '', redirect: true});
       } catch(error) {
         alert("Unable to remove user's name and image, please see the developer console.");
@@ -633,7 +716,6 @@ class App extends Component {
     }
   }
 
-
   requestForApproval = async (contract, requester, requestee) => {
     return new Promise(function(resolve, reject) {
       contract.requestForApproval(
@@ -663,7 +745,7 @@ class App extends Component {
       try {
         console.log("trying to request for approval from a user");
         await this.requestForApproval(contract, requester, requestee);
-        this.setState({redirect: true});
+        alert("Successfully requested for approval from " + requestee + "!")
       } catch(error) {
         alert("Unable to request for approval, please see the developer console.");
         console.log(error);
@@ -688,27 +770,39 @@ class App extends Component {
     })
   }
 
-  getAllRequests = async (event) => {
-    let address = this.state.address;
-    let contract = this.state.contract;
-
-    try {
-      console.log("trying to get all approval requests");
-      let result = await this.getApprovalRequests(contract, address);
-      let addresses = result[0];
-      let numAddresses = result[1];
-      console.log(addresses);
-      console.log("num addresses", numAddresses);
-
-    } catch(error) {
-
-      alert("Unable to get approval requests, please see the developer console.");
-      console.log(error);
-    }
-
+  approveRequester = async (contract, requester, requestee) => {
+    return new Promise(function(resolve, reject) {
+      contract.approveRequester(
+        requester,
+        {from: requestee,
+         gas: 300000},
+        function(err, res){
+          if(err) {
+            reject(err);
+          } else {
+            resolve(res);
+          }
+        }
+      )
+    })
   }
 
-
+  unapproveRequester = async (contract, requester, requestee) => {
+    return new Promise(function(resolve, reject) {
+      contract.unapproveRequester(
+        requester,
+        {from: requestee,
+         gas: 300000},
+        function(err, res){
+          if(err) {
+            reject(err);
+          } else {
+            resolve(res);
+          }
+        }
+      )
+    })
+  }
 
 
 
@@ -753,10 +847,13 @@ class App extends Component {
       let result = await this.getIdentityFrom(contract, requester, requestee);
       let name = result[0];
       let imageHash = result[1];
-      document.getElementById("name").innerHTML = "Name:"
-      document.getElementById("output").innerHTML = name;
-      await this.getFromIPFS(imageHash)
-
+      if(name === '' && imageHash === '') {
+        alert("This address does not have an identity.")
+      } else {
+        document.getElementById("name").innerHTML = "Name: "
+        document.getElementById("output").innerHTML = name;
+        await this.getFromIPFS(imageHash)
+      }
     } catch(error) {
       alert("Unable to get identity, please see the developer console.")
       console.log(error)
@@ -774,10 +871,10 @@ class App extends Component {
     // Getting redirect if any.
     if(prevAddress !== address && currPath !== nextPath) {
       redirect = <Redirect exact from={currPath} to={nextPath}/>
-      console.log(prevAddress)
-      console.log(address)
-      console.log(currPath)
-      console.log(nextPath)
+      // console.log(prevAddress)
+      // console.log(address)
+      // console.log(currPath)
+      // console.log(nextPath)
 
     }
     // 4 scenarios
@@ -924,8 +1021,7 @@ class App extends Component {
                   <Link to="/requestApproval">Request for Approval</Link>
                 </li>
                 <li>
-                  <Link to="/pendingApproval" onClick={() => 
-                    this.getAllRequests(this.state.address)}>
+                  <Link to="/pendingApproval" onClick={() => console.log(this.state)}>
                     Pending your Approval
                   </Link>
                 </li>

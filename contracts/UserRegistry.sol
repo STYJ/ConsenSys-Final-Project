@@ -94,8 +94,6 @@ contract UserRegistry is Ownable { // can create a user registry handler that do
         renounceOwnership();
     }
     
-
-
     function createUser(string _name, string _imageHash) public contractAlive() stopInEmergency() identityDoesNotExist(msg.sender) maxStringLength(_name) ipfsHashLength(_imageHash) {
         users[msg.sender].exists = true;
         users[msg.sender].name = _name;
@@ -103,7 +101,7 @@ contract UserRegistry is Ownable { // can create a user registry handler that do
         emit UserCreated(msg.sender);
     }
         
-    // From requester   to requestee
+    // From requester to requestee
     function requestForApproval(address _requestee) public contractAlive() stopInEmergency() requesterIsNotRequestee(msg.sender, _requestee) identityExists(msg.sender) identityExists(_requestee) {
         
         // Check that max number hasn't been hit.
@@ -122,7 +120,6 @@ contract UserRegistry is Ownable { // can create a user registry handler that do
         emit RequestingForApproval(_requestee, msg.sender);
     }
     
-        
     // From requestee to requester
     function removeRequest(address _requester) public contractAlive() stopInEmergency() requesterIsNotRequestee(_requester, msg.sender) identityExists(_requester) identityExists(msg.sender) {
         
@@ -164,25 +161,7 @@ contract UserRegistry is Ownable { // can create a user registry handler that do
     function getApprovalRequests() public view contractAlive() stopInEmergency() returns (address[ARRAY_MAX_SIZE], uint) {
         return (users[msg.sender].pendingApproval, users[msg.sender].numAddresses);
     }
-    
-    // From requestee to requester
-    function approveMultipleRequesters(address[ARRAY_MAX_SIZE] _requesters) public contractAlive() stopInEmergency() {
-        for (uint i = 0; i < _requesters.length - 1; i++){
-            if(_requesters[i] != address(0)) {
-                approveRequester(_requesters[i]);
-            }
-        }
-    }
 
-    // From requestee to requester
-    function unapproveMultipleRequesters(address[ARRAY_MAX_SIZE] _requesters) public contractAlive() stopInEmergency() {
-        for (uint i = 0; i < _requesters.length - 1; i++){
-            if(_requesters[i] != address(0)){
-                unapproveRequester(_requesters[i]);
-            }
-        }
-    }
-    
     // From requestee to requester
     function getRequesterApprovalStatus(address _requester) public view contractAlive() requesterIsNotRequestee(_requester, msg.sender) identityExists(msg.sender) identityExists(_requester) returns (bool) { 
         return users[msg.sender].permissions[_requester];
@@ -224,13 +203,31 @@ contract UserRegistry is Ownable { // can create a user registry handler that do
         emit NameUpdated(name, _name);
         emit ImageUpdated(imageHash, _imageHash);
     }
-    
-
 
     // Fallback function for accepting ether, no way of withdrawing.
     function () public payable contractAlive() {
         require(msg.data.length == 0);
         emit LogDeposit(msg.sender);
     }
+
+        
+    // From requestee to requester
+    // function approveMultipleRequesters(address[ARRAY_MAX_SIZE] _requesters) public contractAlive() stopInEmergency() {
+    //     for (uint i = 0; i < _requesters.length - 1; i++){
+    //         if(_requesters[i] != address(0)) {
+    //             approveRequester(_requesters[i]);
+    //         }
+    //     }
+    // }
+
+    // From requestee to requester
+    // function unapproveMultipleRequesters(address[ARRAY_MAX_SIZE] _requesters) public contractAlive() stopInEmergency() {
+    //     for (uint i = 0; i < _requesters.length - 1; i++){
+    //         if(_requesters[i] != address(0)){
+    //             unapproveRequester(_requesters[i]);
+    //         }
+    //     }
+    // }
+    
     
 }

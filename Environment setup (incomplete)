@@ -38,5 +38,6 @@ Assuming fresh installation of ubuntu 16.04
 	ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["*"]'
 	ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["PUT", "GET", "POST"]'
 
-5. Navigate into your client folder and do npm start
-6. Have fun! 
+5. run ipfs daemon
+6. Navigate into your client folder and do npm start
+7. Have fun! 
