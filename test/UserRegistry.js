@@ -2,6 +2,8 @@ const UserRegistry = artifacts.require('UserRegistry')
 
 contract('UserRegistry', function(accounts) {
 
+    // Note that because of the way I structured my tests (in 1 contract), the output of 1 tests will be fed into the next test as input.
+
 	const owner = accounts[0]
     const alice = accounts[1]
     const bob = accounts[2]

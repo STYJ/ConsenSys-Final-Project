@@ -1,6 +1,4 @@
-"Explain what measures they’ve taken 
-to ensure that their contracts are not susceptible to 
-common attacks"
+Please read this file on your text editor instead of on github!
 
 There are a number of notable common attacks that have been described in detail on the consensys github website (https://consensys.github.io/smart-contract-best-practices/known_attacks/). I will be going through each and every one of the attacks, describing how (if applicable) I have tried to prevent these attacks.
 

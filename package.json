@@ -1,18 +1,18 @@
 {
   "name": "truffle-react",
   "version": "1.0.0",
-  "description": "A boilerplate Truffle Box project with Create React App for rapid Ethereum Dapp development",
+  "description": "A simple decentralised identity Dapp",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/adrianmcli/truffle-react.git"
+    "url": "git+https://github.com/STYJ/consensys-final-project.git"
   },
   "keywords": [],
-  "author": "Adrian Li",
+  "author": "Simon Tan",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/adrianmcli/truffle-react/issues"
+    "url": "https://github.com/STYJ/consensys-final-project/issues"
   },
-  "homepage": "https://github.com/adrianmcli/truffle-react#readme",
+  "homepage": "https://github.com/STYJ/consensys-final-project#readme",
   "dependencies": {},
   "devDependencies": {
     "babel-polyfill": "^6.26.0",

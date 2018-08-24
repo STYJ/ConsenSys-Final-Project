@@ -36,6 +36,8 @@
 
 pragma solidity ^0.4.14;
 
+// https://github.com/Arachnid/solidity-stringutils
+
 library strings {
     struct slice {
         uint _len;
