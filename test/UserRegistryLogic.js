@@ -1,6 +1,7 @@
-const UserRegistry = artifacts.require('UserRegistry')
+const UserRegistryLogic = artifacts.require('UserRegistryLogic')
+const UserRegistryStorage = artifacts.require('UserRegistryStorage');
 
-contract('UserRegistry', function(accounts) {
+contract('UserRegistryLogic', function(accounts) {
 
     // Note that because of the way I structured my tests (in 1 contract), the output of 1 tests will be fed into the next test as input.
 
@@ -24,8 +25,10 @@ contract('UserRegistry', function(accounts) {
     const montyImage = "QmWmyoMoctfbAaiEs2G46gpeUmhqFRDW6KWo64y7777777"
     const tobyImage = "QmWmyoMoctfbAaiEs2G46gpeUmhqFRDW6KWo6488888888"
 
+
+
     it("Testing the pass and fail scenarios for createUser function", async() => {
-        const userRegistry = await UserRegistry.deployed()
+        const userRegistryLogic = await UserRegistryLogic.deployed()
      
         const nameTooLong = "HelloMyNameIsTooLongToBeAccepted"
         const imageHashIncorrect = "ABCDEF"
@@ -35,7 +38,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to create an identity whose name is too long, should throw an error
         try {
-			await userRegistry.createUser(nameTooLong, imageHash, {from: owner})
+			await userRegistryLogic.createUser(nameTooLong, imageHash, {from: owner})
 			// If await passes, throw an assert fail
 			assert.fail('Expected revert not received');
         } catch (error) {
@@ -45,7 +48,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to create an identity whose imageHash length is not 0, should throw an error
         try {
-			await userRegistry.createUser(name, imageHashIncorrect, {from: owner})
+			await userRegistryLogic.createUser(name, imageHashIncorrect, {from: owner})
 			// If await passes, throw an assert fail
 			assert.fail('Expected revert not received');
         } catch (error) {
@@ -55,7 +58,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to create an identity whose imageHash length is not 46, should throw an error
         try {
-			await userRegistry.createUser(name, imageHashIncorrectAgain, {from: owner})
+			await userRegistryLogic.createUser(name, imageHashIncorrectAgain, {from: owner})
 			// If await passes, throw an assert fail
 			assert.fail('Expected revert not received');
         } catch (error) {
@@ -64,7 +67,7 @@ contract('UserRegistry', function(accounts) {
         }
 
         // Try to create an identity successfully with a valid name and imageHash and that the UserCreated event is emitted
-        var Event = userRegistry.UserCreated()
+        var Event = userRegistryLogic.UserCreated()
         var userAddress;
         var eventName = '';
         var eventEmitted = false
@@ -86,7 +89,7 @@ contract('UserRegistry', function(accounts) {
 
 
         try {
-			await userRegistry.createUser(name, imageHash, {from: owner})
+			await userRegistryLogic.createUser(name, imageHash, {from: owner})
 			await checkForEvent
 	    	assert.equal(userAddress, owner, 'the userAddress (' + userAddress + ') in the event does not match the expected value of ' + owner + ' when the user identity is created in the contract ')
 	    	assert.equal(eventEmitted, true, 'Creating a user identity should emit an event.')
@@ -98,7 +101,7 @@ contract('UserRegistry', function(accounts) {
 		
         // Try to create an identity when an identity has already been created, should throw an error
         try {
-			await userRegistry.createUser(name, imageHash, {from: owner})
+			await userRegistryLogic.createUser(name, imageHash, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -108,14 +111,14 @@ contract('UserRegistry', function(accounts) {
 
 
     it("Testing the pass and fail scenarios for getMyIdentity function", async() => {
-        const userRegistry = await UserRegistry.deployed()
+        const userRegistryLogic = await UserRegistryLogic.deployed()
      
         const name = "alice"
         const imageHash = aliceImage
 
         // Try to get an identity that doesn't exist, should throw an error
         try {
-			await userRegistry.getMyIdentity({from: alice})
+			await userRegistryLogic.getMyIdentity({from: alice})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -123,10 +126,10 @@ contract('UserRegistry', function(accounts) {
         }
 
         // Try to create an identity successfully and try to retrieve it.
-        await userRegistry.createUser(name, imageHash, {from: alice})
+        await userRegistryLogic.createUser(name, imageHash, {from: alice})
 
         try {
-	        const result = await userRegistry.getMyIdentity({from: alice})
+	        const result = await userRegistryLogic.getMyIdentity({from: alice})
 			assert.equal(result[0], name, "The name of the identity created does not match the expected name.")
 			assert.equal(result[1], imageHash, "The image hash of the identity created does not match the expected image hash.")
 		} catch (error) {
@@ -138,12 +141,12 @@ contract('UserRegistry', function(accounts) {
 
 
     it("Testing the pass scenario for isRegistered function", async() => {
-        const userRegistry = await UserRegistry.deployed()
+        const userRegistryLogic = await UserRegistryLogic.deployed()
 
         // Try to get the registration status of alice and bob successfully
         try {
-	        let aliceResult = await userRegistry.isRegistered(alice, {from: alice});
-	        let bobResult = await userRegistry.isRegistered(bob, {from: bob});
+	        let aliceResult = await userRegistryLogic.isRegistered(alice, {from: alice});
+	        let bobResult = await userRegistryLogic.isRegistered(bob, {from: bob});
 
 	        // Asserting that alice's identity exists
 			assert.equal(aliceResult, true, "The registration status of a previously created identity does not match the expected registration status.")
@@ -157,7 +160,7 @@ contract('UserRegistry', function(accounts) {
 
 
     it("Testing the pass and fail scenarios for updateName function", async() => {
-        const userRegistry = await UserRegistry.deployed()
+        const userRegistryLogic = await UserRegistryLogic.deployed()
 		
 		const name = "bob"
         const expectedNewName = "alice two"
@@ -165,7 +168,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to update the name of an identity that doesn't exist, should throw an error
         try {
-			await userRegistry.updateName(name, {from: bob})
+			await userRegistryLogic.updateName(name, {from: bob})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -174,7 +177,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to update the name of an identity with a name that's longer than 20, should throw an error
         try {
-			await userRegistry.updateName(newNameTooLong, {from: alice})
+			await userRegistryLogic.updateName(newNameTooLong, {from: alice})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -182,7 +185,7 @@ contract('UserRegistry', function(accounts) {
         }
 
         // Try to update the name of an identity successfully and that the NameUpdated event is emitted.
-        var Event = userRegistry.NameUpdated()
+        var Event = userRegistryLogic.NameUpdated()
         var expectedOldName = "alice"
         var eventName = '';
         var eventEmitted = false
@@ -205,7 +208,7 @@ contract('UserRegistry', function(accounts) {
         })
 
         try {
-        	await userRegistry.updateName(expectedNewName, {from: alice})
+        	await userRegistryLogic.updateName(expectedNewName, {from: alice})
         	await checkForEvent
         	assert.equal(oldName, expectedOldName, "The old name of the identity emitted in the event does not match the expected old name.")
 	    	assert.equal(newName, expectedNewName, "The updated name of the identity created does not match the expected new name.")
@@ -219,14 +222,14 @@ contract('UserRegistry', function(accounts) {
 
 
     it("Testing the pass and fail scenarios for updateImageHash function", async() => {
-        const userRegistry = await UserRegistry.deployed()
+        const userRegistryLogic = await UserRegistryLogic.deployed()
 		
 		const newImageHashWrongLength = "WrongLength"
         const expectedNewImageHash = "QmWmyoMoctfbAaiEs2G46gpeUmhqFRDW6KWo64y5r58111"
 
         // Try to update the image hash of an identity that doesn't exist, should throw an error
         try {
-			await userRegistry.updateImageHash(bobImage, {from: bob})
+			await userRegistryLogic.updateImageHash(bobImage, {from: bob})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -235,7 +238,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to update the image hash of an identity with a hash of length not equal to 0 or 46, should throw an error
         try {
-			await userRegistry.updateImageHash(newImageHashWrongLength, {from: alice})
+			await userRegistryLogic.updateImageHash(newImageHashWrongLength, {from: alice})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -243,7 +246,7 @@ contract('UserRegistry', function(accounts) {
         }
 
         // Try to update the image hash of an identity successfully and that the ImageUpdated event is emitted.
-        var Event = userRegistry.ImageUpdated()
+        var Event = userRegistryLogic.ImageUpdated()
         var expectedOldImageHash = "QmWmyoMoctfbAaiEs2G46gpeUmhqFRDW6KWo64y5r581V1"
         var eventName = '';
         var eventEmitted = false
@@ -266,7 +269,7 @@ contract('UserRegistry', function(accounts) {
         })
 
         try {
-        	await userRegistry.updateImageHash(expectedNewImageHash, {from: alice})
+        	await userRegistryLogic.updateImageHash(expectedNewImageHash, {from: alice})
         	await checkForEvent
         	assert.equal(oldImageHash, expectedOldImageHash, "The old image hash of the identity emitted in the event does not match the expected old image hash.")
 	    	assert.equal(newImageHash, expectedNewImageHash, "The updated image hash of the identity created does not match the expected new image hash.")
@@ -279,15 +282,15 @@ contract('UserRegistry', function(accounts) {
     })
 
     it("Testing the pass scenarios for updateNameAndImage function", async() => {
-        const userRegistry = await UserRegistry.deployed()
+        const userRegistryLogic = await UserRegistryLogic.deployed()
 
         const expectedNewName = "alice"
         const expectedNewImageHash = "QmWmyoMoctfbAaiEs2G46gpeUmhqFRDW6KWo64y5r581V1"
 		
 
         // Try to update the name and image hash of an identity successfully and that the NameUpdated and ImageUpdated events is emitted.
-        var nameEvent = userRegistry.NameUpdated()
-        var imageEvent = userRegistry.ImageUpdated()
+        var nameEvent = userRegistryLogic.NameUpdated()
+        var imageEvent = userRegistryLogic.ImageUpdated()
         var expectedOldName = "alice two"
         var expectedOldImageHash = "QmWmyoMoctfbAaiEs2G46gpeUmhqFRDW6KWo64y5r58111"
         var nameEventName = '';
@@ -330,7 +333,7 @@ contract('UserRegistry', function(accounts) {
         })
 
         try {
-        	await userRegistry.updateNameAndImage(expectedNewName, expectedNewImageHash, {from: alice})
+        	await userRegistryLogic.updateNameAndImage(expectedNewName, expectedNewImageHash, {from: alice})
         	await checkForNameEvent
         	assert.equal(oldName, expectedOldName, "The old name of the identity emitted in the event does not match the expected old name.")
 	    	assert.equal(newName, expectedNewName, "The updated name of the identity created does not match the expected new name.")
@@ -349,11 +352,11 @@ contract('UserRegistry', function(accounts) {
     })
 
     it("Testing the pass and fail scenarios for getApprovalRequests function", async() => {
-    	const userRegistry = await UserRegistry.deployed()
+    	const userRegistryLogic = await UserRegistryLogic.deployed()
 		
     	// Try to get approval requests for an identity that doesn't exist, should throw an error
     	try {
-			await userRegistry.getApprovalRequests({from: bob})
+			await userRegistryLogic.getApprovalRequests({from: bob})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -366,7 +369,7 @@ contract('UserRegistry', function(accounts) {
 
 
         try {
-        	const result = await userRegistry.getApprovalRequests({from: alice})
+        	const result = await userRegistryLogic.getApprovalRequests({from: alice})
         	assert.equal(result[0], expectedApprovalRequestsArray, "The approval requests array does not match the expected approval requests array.")
 	    	assert.equal(result[1], expectedNumApprovalRequests, "The number of approval requests does not match the expected number of approval requests.")
         } catch (error) {
@@ -376,11 +379,11 @@ contract('UserRegistry', function(accounts) {
     })
 
     it("Testing the pass and fail scenarios for requestForApproval function", async() => {
-    	const userRegistry = await UserRegistry.deployed()
+    	const userRegistryLogic = await UserRegistryLogic.deployed()
 		
     	// Try to make a request for approval by a requestee to a himself, should throw an error
     	try {
-			await userRegistry.requestForApproval(owner, {from: owner})
+			await userRegistryLogic.requestForApproval(owner, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -389,7 +392,7 @@ contract('UserRegistry', function(accounts) {
 
     	// Try to make a request for approval to a requestee that doesn't exist, should throw an error
     	try {
-			await userRegistry.requestForApproval(bob, {from: owner})
+			await userRegistryLogic.requestForApproval(bob, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -399,7 +402,7 @@ contract('UserRegistry', function(accounts) {
 
     	// Try to make a request for approval to a requester that doesn't exist, should throw an error
     	try {
-			await userRegistry.requestForApproval(owner, {from: bob})
+			await userRegistryLogic.requestForApproval(owner, {from: bob})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -408,7 +411,7 @@ contract('UserRegistry', function(accounts) {
 
     	// Try to make a request for approval successfully and that the RequestingForApproval event is emitted
 
-        var Event = userRegistry.RequestingForApproval()
+        var Event = userRegistryLogic.RequestingForApproval()
         var expectedApprovalRequestsArray = alice + ",0x0000000000000000000000000000000000000000,0x0000000000000000000000000000000000000000,0x0000000000000000000000000000000000000000,0x0000000000000000000000000000000000000000"
     	var expectedNumApprovalRequests = 1
         var eventName = '';
@@ -436,9 +439,9 @@ contract('UserRegistry', function(accounts) {
 
 
         try {
-        	await userRegistry.requestForApproval(owner, {from: alice})
+        	await userRegistryLogic.requestForApproval(owner, {from: alice})
         	await checkForEvent
-        	const result = await userRegistry.getApprovalRequests({from: owner})
+        	const result = await userRegistryLogic.getApprovalRequests({from: owner})
         	assert.equal(result[0], expectedApprovalRequestsArray, "The approval requests array does not match the expected approval requests array.")
 	    	assert.equal(result[1], expectedNumApprovalRequests, "The num of approval requests does not match the expected num of approval requests.")
 	    	assert.equal(eventEmitted, true, "Requesting for approval should emit an event.")
@@ -452,7 +455,7 @@ contract('UserRegistry', function(accounts) {
 
     	// Try to make another request for approval even though a request has been made previously, should throw an error
     	try {
-			await userRegistry.requestForApproval(owner, {from: alice})
+			await userRegistryLogic.requestForApproval(owner, {from: alice})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -462,19 +465,19 @@ contract('UserRegistry', function(accounts) {
     	// Try to make a request for approval when the maximum number of requests (5 to make testing easier but in my actual DApp, it's 10) has been reached, should throw an error
 
     	// Create 5 more accounts to test this.
-    	await userRegistry.createUser('bob', bobImage, {from: bob})
-    	await userRegistry.createUser('june', juneImage, {from: june})
-    	await userRegistry.createUser('simon', simonImage, {from: simon})
-    	await userRegistry.createUser('james', jamesImage, {from: james})
-    	await userRegistry.createUser('may', mayImage, {from: may})
+    	await userRegistryLogic.createUser('bob', bobImage, {from: bob})
+    	await userRegistryLogic.createUser('june', juneImage, {from: june})
+    	await userRegistryLogic.createUser('simon', simonImage, {from: simon})
+    	await userRegistryLogic.createUser('james', jamesImage, {from: james})
+    	await userRegistryLogic.createUser('may', mayImage, {from: may})
 
-    	await userRegistry.requestForApproval(owner, {from: bob})
-    	await userRegistry.requestForApproval(owner, {from: june})
-    	await userRegistry.requestForApproval(owner, {from: simon})
-    	await userRegistry.requestForApproval(owner, {from: james})
+    	await userRegistryLogic.requestForApproval(owner, {from: bob})
+    	await userRegistryLogic.requestForApproval(owner, {from: june})
+    	await userRegistryLogic.requestForApproval(owner, {from: simon})
+    	await userRegistryLogic.requestForApproval(owner, {from: james})
 
     	try {
-			await userRegistry.requestForApproval(owner, {from: may})
+			await userRegistryLogic.requestForApproval(owner, {from: may})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -483,11 +486,11 @@ contract('UserRegistry', function(accounts) {
     })
 	
 	it("Testing the pass and fail scenarios for removeRequest function", async() => {
-    	const userRegistry = await UserRegistry.deployed()
+    	const userRegistryLogic = await UserRegistryLogic.deployed()
 		
     	// Try to remove a request for approval from a requestee to a himself, should throw an error
     	try {
-			await userRegistry.removeRequest(owner, {from: owner})
+			await userRegistryLogic.removeRequest(owner, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -496,7 +499,7 @@ contract('UserRegistry', function(accounts) {
 
     	// Try to remove a request for approval from a requestee that doesn't exist, should throw an error
     	try {
-			await userRegistry.removeRequest(owner, {from: monty})
+			await userRegistryLogic.removeRequest(owner, {from: monty})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -506,7 +509,7 @@ contract('UserRegistry', function(accounts) {
 
     	// Try to remove a request for approval from a requester that doesn't exist, should throw an error
     	try {
-			await userRegistry.removeRequest(monty, {from: owner})
+			await userRegistryLogic.removeRequest(monty, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -514,7 +517,7 @@ contract('UserRegistry', function(accounts) {
         }
 
         // Try to remove a request for approval successfully and that a RemoveRequestForApproval event is emitted
-        var Event = userRegistry.RemoveRequestForApproval()
+        var Event = userRegistryLogic.RemoveRequestForApproval()
         var expectedApprovalRequestsArray = james + "," + bob + "," + june + "," + simon + ",0x0000000000000000000000000000000000000000"
     	var expectedNumApprovalRequests = 4
         var eventName = '';
@@ -540,10 +543,10 @@ contract('UserRegistry', function(accounts) {
         })
 
         try {
-        	await userRegistry.removeRequest(alice, {from: owner})
+        	await userRegistryLogic.removeRequest(alice, {from: owner})
         	await checkForEvent
-        	const result = await userRegistry.getApprovalRequests({from: owner})
-        	assert.equal(result[0], expectedApprovalRequestsArray, "The approval requests array does not match the expected approval requests array.")
+        	const result = await userRegistryLogic.getApprovalRequests({from: owner})
+        	assert.equal(result[0], expectedApprovalRequestsArray, result)
 	    	assert.equal(result[1], expectedNumApprovalRequests, "The num of approval requests does not match the expected num of approval requests.")
 	    	assert.equal(eventEmitted, true, "Removing an approval request should emit an event.")
 	    	assert.equal(eventName, "RemoveRequestForApproval", "Removing an approval request should emit a RemoveRequestForApproval event.")
@@ -556,13 +559,13 @@ contract('UserRegistry', function(accounts) {
 
         // Test that a request cannot be removed if the requestee has reached the minimum number of requests (0), should throw an error
 
-        await userRegistry.removeRequest(bob, {from: owner})
-    	await userRegistry.removeRequest(june, {from: owner})
-    	await userRegistry.removeRequest(simon, {from: owner})
-    	await userRegistry.removeRequest(james, {from: owner})
+        await userRegistryLogic.removeRequest(bob, {from: owner})
+    	await userRegistryLogic.removeRequest(june, {from: owner})
+    	await userRegistryLogic.removeRequest(simon, {from: owner})
+    	await userRegistryLogic.removeRequest(james, {from: owner})
 
     	try {
-			await userRegistry.removeRequest(may, {from: owner})
+			await userRegistryLogic.removeRequest(may, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -571,11 +574,11 @@ contract('UserRegistry', function(accounts) {
     })
 
 	it("Testing the pass scenario for getApprovalRequestStatus function", async() => {
-        const userRegistry = await UserRegistry.deployed()
+        const userRegistryLogic = await UserRegistryLogic.deployed()
 
         // Try to get approval request status from a requestee to himself, should throw an error
         try {
-			await userRegistry.getRequesterApprovalStatus(owner, {from: owner})
+			await userRegistryLogic.getRequesterApprovalStatus(owner, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -584,7 +587,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to get approval request status from a requestee who doesn't have an identity, should throw an error
         try {
-			await userRegistry.getRequesterApprovalStatus(owner, {from: monty})
+			await userRegistryLogic.getRequesterApprovalStatus(owner, {from: monty})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -593,7 +596,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to get approval request status from a requester who doesn't an an identity, should throw an error
         try {
-			await userRegistry.getRequesterApprovalStatus(monty, {from: owner})
+			await userRegistryLogic.getRequesterApprovalStatus(monty, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -602,7 +605,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to get approval request status successfully from a valid requestee and requester
         try {
-			const result = await userRegistry.getRequesterApprovalStatus(alice, {from: owner})
+			const result = await userRegistryLogic.getRequesterApprovalStatus(alice, {from: owner})
 			assert.equal(result, false, "The requester approval status retrieved does not match the expected requester approval status.")
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -612,10 +615,10 @@ contract('UserRegistry', function(accounts) {
     })
 
     it("Testing the pass and fail scenarios for approveRequester function", async() => {
-        const userRegistry = await UserRegistry.deployed()
+        const userRegistryLogic = await UserRegistryLogic.deployed()
         // Try to approve a requester from a requestee to himself, should throw an error
         try {
-			await userRegistry.approveRequester(owner, {from: owner})
+			await userRegistryLogic.approveRequester(owner, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -624,7 +627,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to approve a requester who doesn't have an identity, should throw an error
         try {
-			await userRegistry.approveRequester(monty, {from: owner})
+			await userRegistryLogic.approveRequester(monty, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -633,7 +636,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to approve a requester from a requestee who doesn't have an identity, should throw an error
         try {
-			await userRegistry.approveRequester(owner, {from: monty})
+			await userRegistryLogic.approveRequester(owner, {from: monty})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -643,10 +646,10 @@ contract('UserRegistry', function(accounts) {
 
         // Try to approve a requester from a requestee successfully, that the RequesterApproved event is emitted and that the number of approval requests has been reduced by 1
 
-        await userRegistry.requestForApproval(owner, {from: alice})
+        await userRegistryLogic.requestForApproval(owner, {from: alice})
 
         // Try to update the image hash of an identity successfully and that the ImageUpdated event is emitted.
-        var Event = userRegistry.RequesterApproved()
+        var Event = userRegistryLogic.RequesterApproved()
         var expectedApprovalStatus = true
         var expectedApprovalRequestsArray = "0x0000000000000000000000000000000000000000,0x0000000000000000000000000000000000000000,0x0000000000000000000000000000000000000000,0x0000000000000000000000000000000000000000,0x0000000000000000000000000000000000000000"
         var expectedNumApprovalRequests = 0;
@@ -673,10 +676,10 @@ contract('UserRegistry', function(accounts) {
         })
 
         try {
-			await userRegistry.approveRequester(alice, {from: owner})
+			await userRegistryLogic.approveRequester(alice, {from: owner})
 			await checkForEvent
 
-			const approvalStatus = await userRegistry.getRequesterApprovalStatus(alice, {from: owner})
+			const approvalStatus = await userRegistryLogic.getRequesterApprovalStatus(alice, {from: owner})
 			assert.equal(approvalStatus, expectedApprovalStatus, "The requester approval status retrieved does not match the expected requester approval status.")
 
 			assert.equal(eventEmitted, true, "Approving a requester should emit an event.")
@@ -684,7 +687,7 @@ contract('UserRegistry', function(accounts) {
 	    	assert.equal(requestee, expectedRequestee, "The requestee emitted in the event does not match the expected requestee.")
 	    	assert.equal(requester, expectedRequester, "The requester emitted in the event does not match the expected requester.")
 
-			const result = await userRegistry.getApprovalRequests({from: owner})
+			const result = await userRegistryLogic.getApprovalRequests({from: owner})
         	assert.equal(result[0], expectedApprovalRequestsArray, "The approval requests array does not match the expected approval requests array.")
 	    	assert.equal(result[1], expectedNumApprovalRequests, "The num of approval requests does not match the expected num of approval requests.")
 
@@ -696,10 +699,10 @@ contract('UserRegistry', function(accounts) {
     })
 
     it("Testing the pass and fail scenarios for unapproveRequester function", async() => {
-        const userRegistry = await UserRegistry.deployed()
+        const userRegistryLogic = await UserRegistryLogic.deployed()
         // Try to unapprove a requester from a requestee to himself, should throw an error
         try {
-			await userRegistry.unapproveRequester(owner, {from: owner})
+			await userRegistryLogic.unapproveRequester(owner, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -708,7 +711,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to unapprove a requester who doesn't have an identity, should throw an error
         try {
-			await userRegistry.unapproveRequester(monty, {from: owner})
+			await userRegistryLogic.unapproveRequester(monty, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -717,7 +720,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to unapprove a requester from a requestee who doesn't have an identity, should throw an error
         try {
-			await userRegistry.unapproveRequester(owner, {from: monty})
+			await userRegistryLogic.unapproveRequester(owner, {from: monty})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -727,10 +730,10 @@ contract('UserRegistry', function(accounts) {
 
         // Try to unapprove a requester from a requestee successfully, that the RequesterUnapproved event is emitted and that the number of approval requests has been reduced by 1
 
-        await userRegistry.requestForApproval(owner, {from: bob})
+        await userRegistryLogic.requestForApproval(owner, {from: bob})
 
         // Try to update the image hash of an identity successfully and that the ImageUpdated event is emitted.
-        var Event = userRegistry.RequesterUnapproved()
+        var Event = userRegistryLogic.RequesterUnapproved()
         var expectedApprovalStatus = false
         var expectedApprovalRequestsArray = "0x0000000000000000000000000000000000000000,0x0000000000000000000000000000000000000000,0x0000000000000000000000000000000000000000,0x0000000000000000000000000000000000000000,0x0000000000000000000000000000000000000000"
         var expectedNumApprovalRequests = 0;
@@ -757,10 +760,10 @@ contract('UserRegistry', function(accounts) {
         })
 
         try {
-			await userRegistry.unapproveRequester(bob, {from: owner})
+			await userRegistryLogic.unapproveRequester(bob, {from: owner})
 			await checkForEvent
 
-			const approvalStatus = await userRegistry.getRequesterApprovalStatus(bob, {from: owner})
+			const approvalStatus = await userRegistryLogic.getRequesterApprovalStatus(bob, {from: owner})
 			assert.equal(approvalStatus, expectedApprovalStatus, "The requester approval status retrieved does not match the expected requester approval status.")
 
 			assert.equal(eventEmitted, true, "Approving a requester should emit an event.")
@@ -768,7 +771,7 @@ contract('UserRegistry', function(accounts) {
 	    	assert.equal(requestee, expectedRequestee, "The requestee emitted in the event does not match the expected requestee.")
 	    	assert.equal(requester, expectedRequester, "The requester emitted in the event does not match the expected requester.")
 
-			const result = await userRegistry.getApprovalRequests({from: owner})
+			const result = await userRegistryLogic.getApprovalRequests({from: owner})
         	assert.equal(result[0], expectedApprovalRequestsArray, "The approval requests array does not match the expected approval requests array.")
 	    	assert.equal(result[1], expectedNumApprovalRequests, "The num of approval requests does not match the expected num of approval requests.")
 
@@ -780,10 +783,10 @@ contract('UserRegistry', function(accounts) {
     })
 
     it("Testing the pass and fail scenarios for getIdentityFrom function", async() => {
-        const userRegistry = await UserRegistry.deployed()
+        const userRegistryLogic = await UserRegistryLogic.deployed()
         // Try to get identity of a requestee from himself, should throw an error
         try {
-			await userRegistry.getIdentityFrom(owner, {from: owner})
+			await userRegistryLogic.getIdentityFrom(owner, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -792,7 +795,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to get identity of a requestee who doesn't have an identity, should throw an error
         try {
-			await userRegistry.getIdentityFrom(monty, {from: owner})
+			await userRegistryLogic.getIdentityFrom(monty, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -801,7 +804,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to get an identity of a requestee from a requester who doesn't have an identity, should throw an error
         try {
-			await userRegistry.getIdentityFrom(owner, {from: monty})
+			await userRegistryLogic.getIdentityFrom(owner, {from: monty})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -810,7 +813,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to get an identity of a requstee from a requester who is not approved, should throw an error
         try {
-			await userRegistry.getIdentityFrom(owner, {from: bob})
+			await userRegistryLogic.getIdentityFrom(owner, {from: bob})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -819,7 +822,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to get an identity of a requestee from a requester who is approved
         try {
-			const result = await userRegistry.getIdentityFrom(owner, {from: alice})
+			const result = await userRegistryLogic.getIdentityFrom(owner, {from: alice})
 			assert.equal(result[0], 'owner', "The name of the identity created does not match the expected name.")
 			assert.equal(result[1], ownerImage, "The image hash of the identity created does not match the expected image hash.")
 			
@@ -830,17 +833,17 @@ contract('UserRegistry', function(accounts) {
     })
 
     it("Testing the pass scenarios for toggleContractActive function", async() => {
-        const userRegistry = await UserRegistry.deployed()
+        const userRegistryLogic = await UserRegistryLogic.deployed()
 
         // Need this step to prep additional data.
-        await userRegistry.requestForApproval(owner, {from: bob})
+        await userRegistryLogic.requestForApproval(owner, {from: bob})
 
         // Try to pause the contract by toggling the contract to inactive, all functions marked with onlyInEmergency should throw an error
-        await userRegistry.toggleContractActive({from: owner})
+        await userRegistryLogic.toggleContractActive({from: owner})
 
         // Trying to create a user, should throw an error
         try {
-			await userRegistry.createUser("monty", montyImage, {from: monty})
+			await userRegistryLogic.createUser("monty", montyImage, {from: monty})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -849,7 +852,7 @@ contract('UserRegistry', function(accounts) {
 
         // Trying to get my identity, should work as per normal
         try {
-	        const result = await userRegistry.getMyIdentity({from: alice})
+	        const result = await userRegistryLogic.getMyIdentity({from: alice})
 			assert.equal(result[0], 'alice', "The name of the identity created does not match the expected name.")
 			assert.equal(result[1], aliceImage, "The image hash of the identity created does not match the expected image hash.")
 		} catch (error) {
@@ -859,7 +862,7 @@ contract('UserRegistry', function(accounts) {
 
 		// Trying to get registration status, should work as per normal
 		try {
-	        let aliceResult = await userRegistry.isRegistered(alice, {from: alice});
+	        let aliceResult = await userRegistryLogic.isRegistered(alice, {from: alice});
 	        // Asserting that alice's identity exists
 			assert.equal(aliceResult, true, "The registration status of a previously created identity does not match the expected registration status.")
         } catch (error) {
@@ -869,7 +872,7 @@ contract('UserRegistry', function(accounts) {
 
 		// Try to update name, should throw an error
 		try {
-			await userRegistry.updateName("new name", {from: alice})
+			await userRegistryLogic.updateName("new name", {from: alice})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -878,7 +881,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to update image hash, should throw an error
         try {
-			await userRegistry.updateImageHash('', {from: alice})
+			await userRegistryLogic.updateImageHash('', {from: alice})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -887,7 +890,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to update name and image hash, should throw an error
         try {
-			await userRegistry.updateNameAndImage("new name", '', {from: alice})
+			await userRegistryLogic.updateNameAndImage("new name", '', {from: alice})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -896,7 +899,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to get approval requests array, should throw an error
         try {
-        	const result = await userRegistry.getApprovalRequests({from: alice})
+        	const result = await userRegistryLogic.getApprovalRequests({from: alice})
         	assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -905,7 +908,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to request for approval, should throw an error
         try {
-			await userRegistry.requestForApproval(owner, {from: june})
+			await userRegistryLogic.requestForApproval(owner, {from: june})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -914,7 +917,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to remove a request, should throw an error
         try {
-			await userRegistry.removeRequest(bob, {from: owner})
+			await userRegistryLogic.removeRequest(bob, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -923,7 +926,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to get requester approval status, should work as per normal
         try {
-			const result = await userRegistry.getRequesterApprovalStatus(alice, {from: owner})
+			const result = await userRegistryLogic.getRequesterApprovalStatus(alice, {from: owner})
 			assert.equal(result, true, "The requester approval status retrieved does not match the expected requester approval status.")
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -932,7 +935,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to approve requester, should throw an error
         try {
-			await userRegistry.approveRequester(bob, {from: owner})
+			await userRegistryLogic.approveRequester(bob, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -941,7 +944,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to unapprove requester, should throw an error
         try {
-			await userRegistry.unapproveRequester(bob, {from: owner})
+			await userRegistryLogic.unapproveRequester(bob, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -950,7 +953,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to get identity from a requestee, should work as intended.
         try {
-			const result = await userRegistry.getIdentityFrom(owner, {from: alice})
+			const result = await userRegistryLogic.getIdentityFrom(owner, {from: alice})
 			assert.equal(result[0], 'owner', "The name of the identity created does not match the expected name.")
 			assert.equal(result[1], ownerImage, "The image hash of the identity created does not match the expected image hash.")
 			
@@ -962,16 +965,16 @@ contract('UserRegistry', function(accounts) {
     })
 
     it("Testing the pass scenarios for toggleContractActive function", async() => {
-        const userRegistry = await UserRegistry.deployed()
+        const userRegistryLogic = await UserRegistryLogic.deployed()
 
-        await userRegistry.toggleContractActive({from: owner})
+        await userRegistryLogic.toggleContractActive({from: owner})
 
         // Try to pause the contract by toggling the contract to inactive, all functions marked with onlyInEmergency should throw an error
-        await userRegistry.terminateContractPermanently({from: owner})
+        await userRegistryLogic.terminateContractPermanently({from: owner})
 
         // Trying to create a user, should throw an error
         try {
-			await userRegistry.createUser("monty", montyImage, {from: monty})
+			await userRegistryLogic.createUser("monty", montyImage, {from: monty})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -980,7 +983,7 @@ contract('UserRegistry', function(accounts) {
 
         // Trying to get my identity, should throw an error
         try {
-	        const result = await userRegistry.getMyIdentity({from: alice})
+	        const result = await userRegistryLogic.getMyIdentity({from: alice})
 			assert.fail('Expected revert not received');
 		} catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -989,7 +992,7 @@ contract('UserRegistry', function(accounts) {
 
 		// Trying to get registration status, should throw an error
 		try {
-	        let aliceResult = await userRegistry.isRegistered(alice, {from: alice});
+	        let aliceResult = await userRegistryLogic.isRegistered(alice, {from: alice});
 	    	assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -998,7 +1001,7 @@ contract('UserRegistry', function(accounts) {
 
 		// Try to update name, should throw an error
 		try {
-			await userRegistry.updateName("new name", {from: alice})
+			await userRegistryLogic.updateName("new name", {from: alice})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -1007,7 +1010,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to update image hash, should throw an error
         try {
-			await userRegistry.updateImageHash('', {from: alice})
+			await userRegistryLogic.updateImageHash('', {from: alice})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -1016,7 +1019,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to update name and image hash, should throw an error
         try {
-			await userRegistry.updateNameAndImage("new name", '', {from: alice})
+			await userRegistryLogic.updateNameAndImage("new name", '', {from: alice})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -1025,7 +1028,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to get approval requests array, should throw an error
         try {
-        	const result = await userRegistry.getApprovalRequests({from: alice})
+        	const result = await userRegistryLogic.getApprovalRequests({from: alice})
         	assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -1034,7 +1037,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to request for approval, should throw an error
         try {
-			await userRegistry.requestForApproval(owner, {from: june})
+			await userRegistryLogic.requestForApproval(owner, {from: june})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -1043,7 +1046,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to remove a request, should throw an error
         try {
-			await userRegistry.removeRequest(bob, {from: owner})
+			await userRegistryLogic.removeRequest(bob, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -1052,7 +1055,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to get requester approval status, should throw an error
         try {
-			const result = await userRegistry.getRequesterApprovalStatus(alice, {from: owner})
+			const result = await userRegistryLogic.getRequesterApprovalStatus(alice, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -1061,7 +1064,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to approve requester, should throw an error
         try {
-			await userRegistry.approveRequester(bob, {from: owner})
+			await userRegistryLogic.approveRequester(bob, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -1070,7 +1073,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to unapprove requester, should throw an error
         try {
-			await userRegistry.unapproveRequester(bob, {from: owner})
+			await userRegistryLogic.unapproveRequester(bob, {from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -1079,7 +1082,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to get identity from a requestee, should throw an error
         try {
-			const result = await userRegistry.getIdentityFrom(owner, {from: alice})
+			const result = await userRegistryLogic.getIdentityFrom(owner, {from: alice})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;
@@ -1088,7 +1091,7 @@ contract('UserRegistry', function(accounts) {
 
         // Try to pause the contract, should throw an error
         try {
-			const result = await userRegistry.toggleContractActive({from: owner})
+			const result = await userRegistryLogic.toggleContractActive({from: owner})
 			assert.fail('Expected revert not received');
         } catch (error) {
         	const revertFound = error.message.search('revert') >= 0;

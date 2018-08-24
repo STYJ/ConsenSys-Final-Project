@@ -3,7 +3,7 @@ import getWeb3 from './utils/getWeb3'
 import ipfs from './utils/getIPFS'
 
 import getContractInstance from './utils/getContractInstance'
-import contractDefinition from './contracts/UserRegistry.json'
+import logicContractDefinition from './contracts/UserRegistryLogic.json'
 
 import {
   BrowserRouter as Router,
@@ -62,10 +62,10 @@ class App extends Component {
 
     this.approveRequester = this.approveRequester.bind(this);
     this.unapproveRequester = this.unapproveRequester.bind(this);
-
     this.view = this.view.bind(this);
     this.getIdentityFrom = this.getIdentityFrom.bind(this);
 
+    
   }
 
 
@@ -83,12 +83,13 @@ class App extends Component {
   // This function is only run once when the component is mounted for the first time
   componentDidMount = async () => {
     try {
+
       // await is the same as .then without any callback function.
       // Get network provider and web3 instance.
       const web3 = await getWeb3()
 
       // Get the contract instance by passing in web3 and the contract definition.
-      const contract = await getContractInstance(web3, contractDefinition)
+      const contract = await getContractInstance(web3, logicContractDefinition)
 
       // Use web3 to get the user's accounts.
       // If using metamask, the array will always have size of 1 (the selected account).
@@ -172,7 +173,6 @@ class App extends Component {
       console.log(error)
     }
   }
-
 
 
 

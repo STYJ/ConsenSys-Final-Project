@@ -2,15 +2,12 @@ Please read this file on your text editor instead of on github!
 
 There are a number of notable common attacks that have been described in detail on the consensys github website (https://consensys.github.io/smart-contract-best-practices/known_attacks/). I will be going through each and every one of the attacks, describing how (if applicable) I have tried to prevent these attacks.
 
-  _______                             __         _   _             _        
- |__   __|                           / _|       | | | |           | |       
-    | |_   _ _ __   ___  ___    ___ | |_    __ _| |_| |_ __ _  ___| | _____ 
-    | | | | | '_ \ / _ \/ __|  / _ \|  _|  / _` | __| __/ _` |/ __| |/ / __|
-    | | |_| | |_) |  __/\__ \ | (_) | |   | (_| | |_| || (_| | (__|   <\__ \
-    |_|\__, | .__/ \___||___/  \___/|_|    \__,_|\__|\__\__,_|\___|_|\_\___/
-        __/ | |                                                             
-       |___/|_|                                                                                                                               
-
+ _____                                __     _   _   _             _        
+/__   \_   _ _ __   ___  ___    ___  / _|   /_\ | |_| |_ __ _  ___| | _____ 
+  / /\/ | | | '_ \ / _ \/ __|  / _ \| |_   //_\\| __| __/ _` |/ __| |/ / __|
+ / /  | |_| | |_) |  __/\__ \ | (_) |  _| /  _  \ |_| || (_| | (__|   <\__ \
+ \/    \__, | .__/ \___||___/  \___/|_|   \_/ \_/\__|\__\__,_|\___|_|\_\___/
+       |___/|_|                                                                                                                                                 
 ###################
 # Race conditions #
 ###################
@@ -55,7 +52,7 @@ There are a number of notable common attacks that have been described in detail 
 
 	This problem is related to integers and floats and how these types are able to "wrap" around (similar to that of word wrap) if the number gets too big or too small. 
 
-	For some reference, the only place in my function that uses numbers are the maximum length of a name (20 character), the possible options for the hash of an IPFS hash (46 characters or 0 character) and the maximum size of the pendingApproval array (size of 10). The constants cannot be changed and I've designed my functions in a way to prevent integer over/underflow from occuring e.g. len cannot be reduced until an address is removed from the array.
+	For some reference, the only place in my function that uses numbers are the maximum length of a name (20 character), the possible options for the hash of an IPFS hash (46 characters or 0 character) and the maximum size of the pendingApproval array (size of 5). The constants cannot be changed and I've designed my functions in a way to prevent integer over/underflow from occuring e.g. len cannot be reduced until an address is removed from the array.
 
 ################################
 # DoS with (unexpected) revert #
@@ -71,7 +68,7 @@ There are a number of notable common attacks that have been described in detail 
 
 	This problem is related to a malicious actor intentionally causing one of my contract's function to not work properly because of the built in block gas limit for each Ethereum block. 
 
-	To prevent this attack from happening, I've ensured that any string that I require will be of length 20 and below (with the exception of my IPFS Hash which will be either be 46 characters long or 0). Additionally, I have a function that allows user to request for approval (from another user to view their data) and a corresponding data structure to store it. This data structure has a maximum size of 10 so a malicious actor cannot spam this array with addresses to prevent my Dapp from retrieving a list of addresses that are pending approval. When the cap is hit, nobody else can request for approval until the previous ones have been approved / unapproved. 
+	To prevent this attack from happening, I've ensured that any string that I require will be of length 20 and below (with the exception of my IPFS Hash which will be either be 46 characters long or 0). Additionally, I have a function that allows user to request for approval (from another user to view their data) and a corresponding data structure to store it. This data structure has a maximum size of 5 so a malicious actor cannot spam this array with addresses to prevent my Dapp from retrieving a list of addresses that are pending approval. When the cap is hit, nobody else can request for approval until the previous ones have been approved / unapproved. 
 
 ########################################
 # Forcibly Sending Ether to a Contract #

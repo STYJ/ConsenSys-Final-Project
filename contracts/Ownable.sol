@@ -1,6 +1,7 @@
-pragma solidity ^0.4.24;
+// original source: https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/ownership/Ownable.sol
+// Note that I am not going to confirm the style of this contract as this contract does not belong to memory
 
-// https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/ownership/Ownable.sol
+pragma solidity ^0.4.24;
 
 /**
  * @title Ownable

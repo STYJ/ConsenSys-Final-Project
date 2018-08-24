@@ -2,15 +2,15 @@ pragma solidity ^0.4.24;
 
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
-import "../contracts/UserRegistry.sol";
+import "../contracts/UserRegistryLogic.sol";
 
-contract TestUserRegistry {
+contract TestUserRegistryLogic {
 
 	/************/
 	/* Approach */
 	/************/
 
-	// I will be testing that every function and modifier are working correctly and that the correct events are emitted. Both pass (+) and fail (-) scenarios will be described here.
+	// I will be testing that every function and modifier are working correctly and that the correct events are emitted. Both pass (+) and fail (-) scenarios will be described here. I will be testing both UserRegistryLogic and UserRegistryStorage contracts via the UserRegistryLogic smart contract.
 
 	/* createUser function */
 	// (-) Test that an identity cannot be created if the name is greater than length 20

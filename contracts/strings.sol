@@ -1,3 +1,7 @@
+// Original source: https://github.com/Arachnid/solidity-stringutils
+// Note that I am not going to alter the style of this contract as this contract 
+// was not written by me
+
 /*
  * @title String & slice utility library for Solidity contracts.
  * @author Nick Johnson <arachnid@notdot.net>
@@ -36,7 +40,6 @@
 
 pragma solidity ^0.4.14;
 
-// https://github.com/Arachnid/solidity-stringutils
 
 library strings {
     struct slice {
