@@ -21,7 +21,7 @@ const getContractInstance = async (web3, contractDefinition) => {
   // Not really sure why they don't match though... :( horrible workaround.
   var networkId = web3.version.network;
   var networkId2 = Object.keys(contractDefinition.networks)[0];
-  if(networkId != networkId2) {
+  if(networkId !== networkId2) {
     networkId = networkId2
   }
   var deployedAddress = contractDefinition.networks[networkId].address 
