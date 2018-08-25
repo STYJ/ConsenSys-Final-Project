@@ -247,7 +247,7 @@ contract UserRegistryLogic is Ownable {
             msg.sender,
             _requester
         );
-        if(dataStore.getRequesteePendingApproval(
+        if (dataStore.getRequesteePendingApproval(
             msg.sender
         )[index] == _requester) {
 
