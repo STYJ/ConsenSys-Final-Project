@@ -88,6 +88,10 @@ class App extends Component {
       // Get network provider and web3 instance.
       const web3 = await getWeb3()
 
+      console.log("web3", web3);
+
+      console.log(logicContractDefinition);
+
       // Get the contract instance by passing in web3 and the contract definition.
       const contract = await getContractInstance(web3, logicContractDefinition)
 

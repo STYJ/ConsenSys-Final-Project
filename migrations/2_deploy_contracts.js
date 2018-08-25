@@ -7,14 +7,23 @@ var UserRegistryLogic = artifacts.require("./contracts/UserRegistryLogic.sol");
 // Then get instance of UserRegistryStorage
 // Then run updateLogicAddress.
 
-module.exports = function(deployer) {
-  deployer.deploy(UserRegistryStorage).then(function() {
-  	  return deployer.deploy(UserRegistryLogic, UserRegistryStorage.address).then(function() {
-  	  	return UserRegistryStorage.deployed().then(function(instance) {
-  	  		return instance.updateLogicAddress(UserRegistryLogic.address);
-  	  	})
-  	  })
-	}
-  );
-};
+// module.exports = function(deployer) {
+//   deployer.deploy(UserRegistryStorage).then(function() {
+//   	  return deployer.deploy(UserRegistryLogic, UserRegistryStorage.address).then(function() {
+//   	  	return UserRegistryStorage.deployed().then(function(instance) {
+//   	  		return instance.updateLogicAddress(UserRegistryLogic.address);
+//   	  	})
+//   	  })
+// 	}
+//   );
+// };
 
+module.exports = function(deployer) {
+    deployer.then(async () => {
+        await deployer.deploy(UserRegistryStorage);
+        await deployer.deploy(UserRegistryLogic, UserRegistryStorage.address);
+        await UserRegistryStorage.deployed().then(function(instance) {
+        	return instance.updateLogicAddress(UserRegistryLogic.address);
+        })
+    })
+}

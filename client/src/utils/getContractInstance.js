@@ -17,9 +17,13 @@ const getContractInstance = async (web3, contractDefinition) => {
   // Create a contract object
   var contractObject = web3.eth.contract(contractDefinition.abi);
 
-
   // Initiate contract for an address
+  // Not really sure why they don't match though... :( horrible workaround.
   var networkId = web3.version.network;
+  var networkId2 = Object.keys(contractDefinition.networks)[0];
+  if(networkId != networkId2) {
+    networkId = networkId2
+  }
   var deployedAddress = contractDefinition.networks[networkId].address 
   var instance = contractObject.at(deployedAddress);
 
