@@ -111,7 +111,12 @@ contract UserRegistryStorage is Ownable {
         address requestee,
         address requester,
         bool permission
-    ) public contractAlive() stopInEmergency() onlyFromLogicAddress() {
+    )
+        public
+        contractAlive()
+        stopInEmergency()
+        onlyFromLogicAddress()
+    {
         // Set requesters' permission to view your details
         users[requestee].permissions[requester] = permission;
     }
@@ -140,7 +145,12 @@ contract UserRegistryStorage is Ownable {
         address requestee,
         address requester,
         uint index
-    ) public contractAlive() stopInEmergency() onlyFromLogicAddress() {
+    )
+        public
+        contractAlive()
+        stopInEmergency()
+        onlyFromLogicAddress()
+    {
         // Add requester's request to requestee's pendingApproval array
         users[requestee].pendingApproval[index] = requester;   
     }
