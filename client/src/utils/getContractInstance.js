@@ -17,6 +17,7 @@ const getContractInstance = async (web3, contractDefinition) => {
   // Create a contract object
   var contractObject = web3.eth.contract(contractDefinition.abi);
 
+
   // Initiate contract for an address
   var networkId = web3.version.network;
   var deployedAddress = contractDefinition.networks[networkId].address 

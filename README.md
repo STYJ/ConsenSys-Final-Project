@@ -17,19 +17,21 @@ Without further ado, let's proceed to set this up!
 - Assuming fresh installation of ubuntu 16.04
 
 ### Basic setup 
-1. install nvm - curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
-2. install node - nvm install node
-3. install ganache-cli - npm install -g ganache-cli
-4. install truffle - npm install -g truffle
-5. install ipfs - npm install -g ipfs
+0. sudo apt install curl
+1. curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash and restart terminal.
+2. nvm install node
+3. npm install -g ganache-cli
+4. npm install -g truffle
+5. install ipfs for linux (download package, unzip it and run ./install.sh)
+6. install google chrome and install the metamask extension.
 
 ### To test
 1. Run ganache-cli in one terminal
-2. Open another terminal, navigate to the clients folder and do truffle test.
+2. Open another terminal, navigate to the root folder and do truffle test.
 
 ### To interact with the dapp, please do the following
-1. Run ganache-cli and connect metamask to ganache (under settings, new RPC url, enter http://127.0.0.1:8545)
-2. Import as many accounts as you'd like to Metamask (you can run ganache-cli -m so you don't have to keep reimporting accounts)
+1. Run ganache-cli -m and connect metamask to ganache (under settings, new RPC url, enter http://127.0.0.1:8545)
+2. Import at least 5 accounts to Metamask (you can run ganache-cli -m instead of ganache-cli so you don't have to keep reimporting accounts)
 3. Navigate to the root folder (there should be a contracts folder in this folder) and do "truffle compile" followed by "truffle migrate"
 4. Navigate to the client folder and do npm install
 5. Open a new terminal and run ipfs init followed by the following commands:
@@ -37,7 +39,7 @@ Without further ado, let's proceed to set this up!
   - ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["*"]'
   - ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["PUT", "GET", "POST"]'
 6. run ipfs daemon
-7. run npm start
+7. run npm start inside the terminal that is currently in the client folder (consensys-final-project/client)
 8. Have fun! 
 
 
