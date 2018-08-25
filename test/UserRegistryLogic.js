@@ -4,6 +4,7 @@ const UserRegistryStorage = artifacts.require('UserRegistryStorage');
 contract('UserRegistryLogic', function(accounts) {
 
     // Note that because of the way I structured my tests (in 1 contract), the output of 1 tests will be fed into the next test as input.
+    // Explanations can be found in the TestUserRegistryLogic.sol file
 
 	const owner = accounts[0]
     const alice = accounts[1]

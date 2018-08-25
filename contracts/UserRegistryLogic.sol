@@ -3,26 +3,30 @@ import "./Ownable.sol";
 import "./strings.sol";
 import "./UserRegistryStorage.sol";
 
-// can create a user registry handler that does the instantiation of this contract
 contract UserRegistryLogic is Ownable {
     using strings for *;
-    
-    
+
+    // Constants
     uint constant MAX_LEN = 20;
     uint constant IPFS_LEN = 46;
     uint constant ARRAY_MAX_SIZE = 5;
     
-    
+    // Configs
     address private dataStoreAddress;
     UserRegistryStorage private dataStore;
+
+    // Contract status
     bool private active;
     bool private contractTerminated;
     
+    // Events
     event LogDeposit(address indexed sender);
-    event dataStoreAddressAddressUpdated(address indexed oldDataStoreAddress, address indexed newDataStoreAddress);
+    event dataStoreAddressAddressUpdated(
+        address indexed oldDataStoreAddress,
+        address indexed newDataStoreAddress
+    );
     event ActiveStatusToggled(bool indexed oldStatus, bool indexed newStatus);
     event ContractTerminatedPermanently();
-    
     event UserCreated(address indexed userAddress);
     event NameUpdated(string oldName, string newName);
     event ImageUpdated(string oldImageHash, string newImageHash);
@@ -43,7 +47,7 @@ contract UserRegistryLogic is Ownable {
         address indexed requester
     );
     
-        
+    // Modifiers
     modifier identityDoesNotExist(address _address) {
         require(!dataStore.getRequesteeExists(_address));
         _;
@@ -85,27 +89,50 @@ contract UserRegistryLogic is Ownable {
         _;
     }
 
-        
-    
-    
-    
-    
-    
-    
+    // Utility functions
     constructor(address _dataStoreAddress) Ownable() public {
         active = true;
         contractTerminated = false;
         dataStoreAddress = _dataStoreAddress;
         dataStore = UserRegistryStorage(dataStoreAddress);
     }
+
+    function () public payable contractAlive() {
+        // Fallback payable function to accept ether
+        require(msg.data.length == 0);
+        emit LogDeposit(msg.sender);
+    }
+
+    function toggleContractActive() public contractAlive() onlyOwner() {
+        // To pause a function in the event of a bug
+        active = !active;
+        emit ActiveStatusToggled(!active, active);
+    }
+    
+    function terminateContractPermanently()
+        public
+        contractAlive()
+        onlyOwner()
+    {
+        // To completely terminate the function (similar to selfdestruct)
+        contractTerminated = true;
+        owner.transfer(address(this).balance);
+        renounceOwnership();
+        emit ContractTerminatedPermanently();
+    }
     
     function updateDataStore (address _dataStoreAddress) public onlyOwner() {
+        // Update the data store contract address
         address oldDataStoreAddress = dataStoreAddress;
         dataStoreAddress = _dataStoreAddress;
         dataStore = UserRegistryStorage(dataStoreAddress);
-        emit dataStoreAddressAddressUpdated(oldDataStoreAddress, dataStoreAddress);
+        emit dataStoreAddressAddressUpdated(
+            oldDataStoreAddress,
+            dataStoreAddress
+        );
     }
 
+    // Identity Dapp functions
     function createUser(string _name, string _imageHash)
         public
         contractAlive()
@@ -114,30 +141,11 @@ contract UserRegistryLogic is Ownable {
         maxStringLength(_name)
         ipfsHashLength(_imageHash)
     {
-        dataStore.setRequesteeExists(msg.sender, true);
+        // Sets name, imageHash and exists to true.
         dataStore.setRequesteeName(msg.sender, _name);
         dataStore.setRequesteeImageHash(msg.sender, _imageHash);
+        dataStore.setRequesteeExists(msg.sender, true);
         emit UserCreated(msg.sender);
-    }
-
-    function getMyIdentity()
-        public
-        view
-        contractAlive()
-        identityExists(msg.sender)
-        returns (string, string)
-    {
-        return (dataStore.getRequesteeName(msg.sender), dataStore.getRequesteeImageHash(msg.sender));
-
-    }
-    
-    function isRegistered(address _address)
-        public
-        view
-        contractAlive()
-        returns (bool)
-    {
-        return dataStore.getRequesteeExists(_address);
     }
 
     function updateName(string _name)
@@ -147,6 +155,7 @@ contract UserRegistryLogic is Ownable {
         identityExists(msg.sender)
         maxStringLength(_name)
     {
+        // Update identity with new name
         string memory name = dataStore.getRequesteeName(msg.sender);
         dataStore.setRequesteeName(msg.sender, _name);
         emit NameUpdated(name, _name);
@@ -159,6 +168,7 @@ contract UserRegistryLogic is Ownable {
         identityExists(msg.sender)
         ipfsHashLength(_imageHash)
     {
+        // Update identity with new image hash
         string memory imageHash = dataStore.getRequesteeImageHash(msg.sender);
         dataStore.setRequesteeImageHash(msg.sender, _imageHash);
         emit ImageUpdated(imageHash, _imageHash);
@@ -172,6 +182,7 @@ contract UserRegistryLogic is Ownable {
         maxStringLength(_name)
         ipfsHashLength(_imageHash)
     {
+        // Update identity with new name and image hash
         string memory name;
         string memory imageHash;
         (name, imageHash) = getMyIdentity();
@@ -179,20 +190,6 @@ contract UserRegistryLogic is Ownable {
         updateImageHash(_imageHash);
         emit NameUpdated(name, _name);
         emit ImageUpdated(imageHash, _imageHash);
-    }
-
-    function getApprovalRequests()
-        public
-        view
-        contractAlive()
-        stopInEmergency()
-        identityExists(msg.sender)
-        returns (address[ARRAY_MAX_SIZE], uint)
-    {
-        return (
-            dataStore.getRequesteePendingApproval(msg.sender),
-            dataStore.getRequesteeNumAddresses(msg.sender)
-        );
     }
 
     function requestForApproval(address _requestee)
@@ -203,22 +200,36 @@ contract UserRegistryLogic is Ownable {
         identityExists(msg.sender)
         identityExists(_requestee)
     {        
-        // Check that max number hasn't been hit.
-        require(dataStore.getRequesteeNumAddresses(_requestee) < ARRAY_MAX_SIZE);
+        // Requesting for approval to view someone else's identity
+        // First guard checks if the max number of approval requests is hit
+        require(
+            dataStore.getRequesteeNumAddresses(_requestee) < ARRAY_MAX_SIZE
+        );
         
-        // Check that requestor hasn't requested previously.
-        uint index = dataStore.getRequesterPendingApprovalIndex(_requestee, msg.sender); // will default to 0 if uninitialized
-        require(dataStore.getRequesteePendingApproval(_requestee)[index] != msg.sender);
+        // Second guard checks if requester requested previously
+        uint index = dataStore.getRequesterPendingApprovalIndex(
+            _requestee,
+            msg.sender
+        );
+        require(dataStore.getRequesteePendingApproval(
+            _requestee)[index] != msg.sender
+        );
         
-        // Since the index in pendingApproval is not the requestor, get new index
+        // If both guards pass, get index and store into pendingApproval array
         index = dataStore.getRequesteeNumAddresses(_requestee);
         dataStore.setRequesteePendingApproval(_requestee, msg.sender, index);
-        dataStore.setRequesterPendingApprovalIndex(_requestee, msg.sender, index);
-        dataStore.setRequesteeNumAddresses(_requestee, dataStore.getRequesteeNumAddresses(_requestee) + 1);
+        dataStore.setRequesterPendingApprovalIndex(
+            _requestee,
+            msg.sender,
+            index
+        );
+        dataStore.setRequesteeNumAddresses(
+            _requestee,
+            dataStore.getRequesteeNumAddresses(_requestee) + 1
+        );
         emit RequestingForApproval(_requestee, msg.sender);
     }
     
-    // msg.sender = requestee
     function removeRequest(address _requester)
         public
         contractAlive()
@@ -227,40 +238,45 @@ contract UserRegistryLogic is Ownable {
         identityExists(_requester)
         identityExists(msg.sender)
     {
-        
-        // Check that the min num hasn't been hit
+        // Remove a requester's request for approval
+        // First guard checks if the min number of approval requests is hit
         require(dataStore.getRequesteeNumAddresses(msg.sender) > 0);
         
-        // Check that the requestor exists
-        uint index = dataStore.getRequesterPendingApprovalIndex(msg.sender, _requester);
-        if(dataStore.getRequesteePendingApproval(msg.sender)[index] == _requester) {
+        // Second guard checks if requester's request exists
+        uint index = dataStore.getRequesterPendingApprovalIndex(
+            msg.sender,
+            _requester
+        );
+        if(dataStore.getRequesteePendingApproval(
+            msg.sender
+        )[index] == _requester) {
 
-            // Replace last address with the requestor's index from pendingApproval, update index mapping then remove last index
-            uint lastIndex = dataStore.getRequesteeNumAddresses(msg.sender) - 1;
-            address lastAddress = dataStore.getRequesteePendingApproval(msg.sender)[lastIndex];
-            dataStore.setRequesteePendingApproval(msg.sender, lastAddress, index);
-            dataStore.setRequesterPendingApprovalIndex(msg.sender, lastAddress, index);
-            
-            // delete last index and reduce size
+            // Replace the request to be removed with the last request
+            // then reduce the array size by 1
+            uint lastIndex =
+                dataStore.getRequesteeNumAddresses(msg.sender) - 1;
+            address lastAddress = dataStore.getRequesteePendingApproval(
+                msg.sender
+            )[lastIndex];
+            dataStore.setRequesteePendingApproval(
+                msg.sender,
+                lastAddress,
+                index
+            );
+            dataStore.setRequesterPendingApprovalIndex(
+                msg.sender,
+                lastAddress,
+                index
+            );
             dataStore.deleteRequesteePendingApproval(msg.sender, lastIndex);
-            dataStore.setRequesteeNumAddresses(msg.sender, dataStore.getRequesteeNumAddresses(msg.sender) - 1);
-        
+            dataStore.setRequesteeNumAddresses(
+                msg.sender,
+                dataStore.getRequesteeNumAddresses(msg.sender) - 1
+            );
             emit RemoveRequestForApproval(msg.sender, _requester);
         }
     }
 
-    function getRequesterApprovalStatus(address _requester)
-        public
-        view
-        contractAlive()
-        requesterIsNotRequestee(_requester, msg.sender)
-        identityExists(msg.sender)
-        identityExists(_requester)
-        returns (bool)
-    { 
-        return dataStore.getRequesterPermission(msg.sender, _requester);
-    }
- 
     function approveRequester(address _requester)
         public
         contractAlive()
@@ -269,6 +285,7 @@ contract UserRegistryLogic is Ownable {
         identityExists(msg.sender)
         identityExists(_requester)
     {
+        // Approve a requester to view your identity
         dataStore.setRequesterPermission(msg.sender, _requester, true);
         emit RequesterApproved(msg.sender, _requester);
         removeRequest(_requester);
@@ -282,9 +299,64 @@ contract UserRegistryLogic is Ownable {
         identityExists(msg.sender)
         identityExists(_requester)
     {
+        // Revoke a requester's ability to view your identity
         dataStore.setRequesterPermission(msg.sender, _requester, false);
         emit RequesterUnapproved(msg.sender, _requester);
         removeRequest(_requester);
+    }
+
+    // Helper functions 
+    function isRegistered(address _address)
+        public
+        view
+        contractAlive()
+        returns (bool)
+    {
+        // Get the registration status of an address
+        return dataStore.getRequesteeExists(_address);
+    }
+
+    function getMyIdentity()
+        public
+        view
+        contractAlive()
+        identityExists(msg.sender)
+        returns (string, string)
+    {
+        // Get the name and image hash of msg.sender
+        return (
+            dataStore.getRequesteeName(msg.sender),
+            dataStore.getRequesteeImageHash(msg.sender)
+        );
+
+    }
+    
+    function getApprovalRequests()
+        public
+        view
+        contractAlive()
+        stopInEmergency()
+        identityExists(msg.sender)
+        returns (address[ARRAY_MAX_SIZE], uint)
+    {
+        // Get an array of approval requests from msg.sender
+        return (
+            dataStore.getRequesteePendingApproval(msg.sender),
+            dataStore.getRequesteeNumAddresses(msg.sender)
+        );
+    }
+
+    function getRequesterApprovalStatus(address _requester)
+        public
+        view
+        contractAlive()
+        requesterIsNotRequestee(_requester, msg.sender)
+        identityExists(msg.sender)
+        identityExists(_requester)
+        returns (bool)
+    {
+        // Get a requester's approval status from msg.sender
+        return dataStore.getRequesterPermission(msg.sender, _requester);
     }
 
     function getIdentityFrom(address _requestee)
@@ -297,43 +369,9 @@ contract UserRegistryLogic is Ownable {
         isApproved(msg.sender, _requestee)
         returns (string, string)
     {
-        return (dataStore.getRequesteeName(_requestee), dataStore.getRequesteeImageHash(_requestee));
+        // Get a requestee's identity
+        return (dataStore.getRequesteeName(_requestee),
+            dataStore.getRequesteeImageHash(_requestee)
+        );
     }
-
-    function toggleContractActive() public contractAlive() onlyOwner() {
-        active = !active;
-        emit ActiveStatusToggled(!active, active);
-    }
-    
-    function terminateContractPermanently() public contractAlive() onlyOwner() {
-        contractTerminated = true;
-        owner.transfer(address(this).balance);
-        renounceOwnership();
-        emit ContractTerminatedPermanently();
-    }
-    
-    // Fallback function for accepting ether, no way of withdrawing.
-    function () public payable contractAlive() {
-        require(msg.data.length == 0);
-        emit LogDeposit(msg.sender);
-    }
-
-    // From requestee to requester
-    // function approveMultipleRequesters(address[ARRAY_MAX_SIZE] _requesters) public contractAlive() stopInEmergency() {
-    //     for (uint i = 0; i < _requesters.length - 1; i++){
-    //         if(_requesters[i] != address(0)) {
-    //             approveRequester(_requesters[i]);
-    //         }
-    //     }
-    // }
-
-    // From requestee to requester
-    // function unapproveMultipleRequesters(address[ARRAY_MAX_SIZE] _requesters) public contractAlive() stopInEmergency() {
-    //     for (uint i = 0; i < _requesters.length - 1; i++){
-    //         if(_requesters[i] != address(0)){
-    //             unapproveRequester(_requesters[i]);
-    //         }
-    //     }
-    // }
-
 }
