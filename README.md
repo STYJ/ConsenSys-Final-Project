@@ -9,11 +9,11 @@ There is a myriad of issues pertaining to privacy when it comes to your personal
 
 This goal of this project is to create the data structure to hold these private and confidential information. I've opted for a KISS approach in order to make my contract easy to understand (which comes with higher gas costs as a trade off). 
 
+## User stories
 
-Add usecases here.
+Any individual is able to interact with the dapp however, you need to have registered an identity for you to be able to view the identities of others. Once an identity has been created, you can also update it if it's incorrect. To view the identity of others, you will first need to make an approval request. This approval request can either be approved or rejected by the requestee. Once approved, you can enter the address of the requestee to view his/her details. 
 
-
-
+I've also built an additional functionality on top the dapp where if you swap metamask accounts, the dapp will be reflected on the fly to show you your latest active account. This is to ensure that the address registered on web3 is the correct one and that you don't sign the wrong transaction.
 
 Without further ado, let's proceed to set this up!
 
@@ -56,3 +56,4 @@ Without further ado, let's proceed to set this up!
 
 1. I used a more updated truffle react boilerplate which can be found here https://github.com/adrianmcli/truffle-react but I downgraded the web3 version to 0.20.7 as it is more stable.
 2. Please wait for transactions to be confirmed before swapping metamask accounts otherwise the transactions will be stuck in limbo on the blockchain (where it's mined but metamask says it's pending confirmation).
+3. There is a front end bug that I am unable to fix. I've spent a lot of time on it but to no avail. I will require your assistance to help me refresh the page. You will be notified via an alert so please read my alerts carefully! 
