@@ -21,8 +21,6 @@ const getContractInstance = async (web3, contractDefinition) => {
   // Not really sure why they don't match though... :( horrible workaround.
   var networks = Object.keys(contractDefinition.networks);
   var networkId = web3.version.network;
-  console.log("from web3", networkId);
-  console.log("from truffle", networks);
   var networkId2 = networks[networks.length - 1];
   if(networkId !== networkId2) {
     networkId = networkId2

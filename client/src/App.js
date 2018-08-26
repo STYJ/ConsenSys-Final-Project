@@ -957,9 +957,7 @@ class App extends Component {
                   <Link to="/requestApproval">Request for Approval</Link>
                 </li>
                 <li>
-                  <Link to="/pendingApproval" onClick={() => console.log(this.state)}>
-                    Pending your Approval
-                  </Link>
+                  <Link to="/pendingApproval">Pending your Approval</Link>
                 </li>
                 <li>
                   <Link to="/getDetails">Get someone's Details</Link>
