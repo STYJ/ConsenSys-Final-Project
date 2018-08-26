@@ -75,7 +75,6 @@ class App extends Component {
   componentDidUpdate = async () => {
 
       if(this.state.redirect) {
-        console.log('rerendering to get rid of redirect')
         this.setState({redirect: false})
       }
   }
@@ -87,10 +86,6 @@ class App extends Component {
       // await is the same as .then without any callback function.
       // Get network provider and web3 instance.
       const web3 = await getWeb3()
-
-      console.log("web3", web3);
-
-      console.log(logicContractDefinition);
 
       // Get the contract instance by passing in web3 and the contract definition.
       const contract = await getContractInstance(web3, logicContractDefinition)
@@ -107,13 +102,11 @@ class App extends Component {
 
       if(typeof address !== 'undefined') {
         try {
-          console.log("trying to get registration status inside componentDidMount");
           registered = await this.getRegistrationStatus(contract, address);
         } catch(error) {
           alert("Unable to get registration status, please see the developer console.")
           console.log(error)
         }
-        console.log("inside componentDidMount, registered:": registered)
       }
 
       // Getting identity if registration exists
@@ -126,7 +119,6 @@ class App extends Component {
       if(registered) {
         let result;
         try {
-          console.log("trying to get my identity inside componentDidMount");
           result = await this.getMyIdentity(contract, address);
           name = result[0];
           imageHash = result[1];
@@ -134,11 +126,8 @@ class App extends Component {
           alert("Unable to get identity, please see the developer console.")
           console.log(error)
         }
-        console.log("inside componentDidMount, Name:", name);
-        console.log("inside componentDidMount, imageHash:", imageHash);
 
         try {
-          console.log("SCB, trying to get all approval requests");
           let requestResult = await this.getApprovalRequests(contract, address);
           approvalRequests = requestResult[0];
           numApprovalRequests = requestResult[1].c[0];
@@ -165,7 +154,6 @@ class App extends Component {
         approvalRequests,
         numApprovalRequests
       }, () => {
-        console.log("inside componentDidMount, subscribing to public config store ");
         this.state.web3.currentProvider.publicConfigStore.on(
           'update',
           this.subscribeCallBack);
@@ -245,7 +233,7 @@ class App extends Component {
           <div>
             <h2>Update your details here!</h2>
             <form onSubmit={this.update}>
-              <img id="ipfsImage" src='' alt='Your picture cannot be found, please upload a new pic.'></img> 
+              <div id="ipfsImage"></div>
               <br/>
               <label>
                 Current Name: {this.state.name} <br/>
@@ -289,7 +277,6 @@ class App extends Component {
                       <tr>
                         <td><button onClick = {
                           async () => {
-                            console.log("approving requester")
 
                             try {
                               await this.approveRequester(
@@ -297,7 +284,6 @@ class App extends Component {
                                 this.state.approvalRequests[i],
                                 this.state.address
                               )
-
                               alert("Requester " + this.state.approvalRequests[i] + " has been approved. Unfortunately, I am not able to redirect my page properly after requests are approved so I will need your help to manually refresh the browser.")
                             } catch(error) {
                               alert("Unable to approve request, please see the developer console.");
@@ -307,7 +293,6 @@ class App extends Component {
                         }>Approve</button></td>
                         <td><button onClick = {
                           async () => {
-                            console.log("rejecting requester")
 
                             try {
                               await this.unapproveRequester(
@@ -366,8 +351,7 @@ class App extends Component {
               </label>
               <button>View details</button>
             </form>
-
-            <img id="ipfsImage" src=''></img> 
+            <div id="ipfsImage"></div>
             <br/>
             <label id="name">  
             </label>
@@ -390,7 +374,6 @@ class App extends Component {
 
     // Check if user is currently logged in or out
     if(typeof address !== 'undefined') {
-      console.log("SCB, User is currently logged into metamask")
 
       // Getting details of account
       let route = null;
@@ -400,13 +383,11 @@ class App extends Component {
       let numApprovalRequests = null;
 
       try {
-        console.log("SCB, trying to get registration status");
         registered = await this.getRegistrationStatus(contract, address);
       } catch(error) {
         alert("Unable to get registration status, please see the developer console.")
         console.log(error)
       }
-      console.log("SCB, registered:", registered)
 
       // Getting route
       route = await this.getRoute(address, registered);
@@ -414,19 +395,15 @@ class App extends Component {
       // Only check for details if registered
       if(registered) {
         try {
-          console.log("SCB, trying to get my identity");
           let result = await this.getMyIdentity(contract, address);
           name = result[0];
           imageHash = result[1];
         } catch(error) {
-          console.log("Unable to get identity, please see the developer console")
+          alert("Unable to get identity, please see the developer console")
           console.log(error)
         }
-        console.log("SCB, Name:", name);
-        console.log("SCB, imageHash:", imageHash);
 
         try {
-          console.log("SCB, trying to get all approval requests");
           let requestResult = await this.getApprovalRequests(contract, address); // for some weird reason this one is not updating!!
           approvalRequests = requestResult[0];
           numApprovalRequests = requestResult[1].c[0];
@@ -438,11 +415,9 @@ class App extends Component {
 
       // Check if user was previously logged in
       if(this.state.address) {
-        console.log("SCB, user was previously logged in on metamask")
 
         // Check new account details (if account didnt change, pass on trigger)
         if(address !== this.state.address.toLowerCase()){
-          console.log("SCB, user switched accounts")
           this.setState({
             address,
             prevAddress: this.state.address,
@@ -456,7 +431,6 @@ class App extends Component {
           })
         } 
       } else {
-        console.log("SCB, user was not previously logged in on metamask")
         this.setState({
           address,
           prevAddress: this.state.address,
@@ -471,7 +445,6 @@ class App extends Component {
       }
     } else {
       // User logged out
-      console.log("SCB, User has logged out out of metamask")
       this.setState((prevState) => ({
         address: null,
         prevAddress: this.state.address,
@@ -509,9 +482,7 @@ class App extends Component {
     let res = await ipfs.files.add(buffer);
 
     try {
-      console.log("trying to create user inside uploadToIPFS");
       await this.createUser(app.state.contract, address, name, res[0].hash);
-      console.log("user is created! inside uploadToIPFS")
 
       let registered = true;
       let approvalRequests = ["0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000"]
@@ -626,7 +597,6 @@ class App extends Component {
       // case 1
 
       try {
-        console.log("trying to update user's name");
         await this.updateUserDetails(contract, address, name, '', 1);
         alert("Name has been updated! The page will redirect to the home page once you click 'Ok'");
         this.setState({name, redirect: true});
@@ -643,7 +613,6 @@ class App extends Component {
         const buffer = await Buffer.from(reader.result);
         let res = await ipfs.files.add(buffer);
         try {
-          console.log("trying to update user's image hash");
           await this.updateUserDetails(contract, address, '', res[0].hash, 2);
           alert("Pic has been updated! The page will redirect to the home page once you click 'Ok'");
           this.setState({imageHash: res[0].hash, redirect: true});
@@ -661,7 +630,6 @@ class App extends Component {
         const buffer = await Buffer.from(reader.result);
         let res = await ipfs.files.add(buffer);
         try {
-          console.log("trying to update user's image hash");
           await this.updateUserDetails(contract, address, name, res[0].hash, 3);
           alert("Name and Pic has been updated! The page will redirect to the home page once you click 'Ok'");
           this.setState({name, imageHash: res[0].hash, redirect: true});
@@ -674,7 +642,6 @@ class App extends Component {
       // case 4
 
       try {
-        console.log("trying to remove user's name and image");
         await this.updateUserDetails(contract, address, '', '', 4);
         alert("Name and Pic has been removed. The page will redirect to the home page once you click 'Ok'");
         this.setState({name: '', imageHash: '', redirect: true});
@@ -687,37 +654,16 @@ class App extends Component {
 
 
   // Get pic from IPFS
-  getFromIPFS = async(hash) => { 
-
-    if(hash !== '') {
-      // Simulate a call to Dropbox or other service that can
-      // return an image as an ArrayBuffer.
-      var xhr = new XMLHttpRequest();
-
-      // Use JSFiddle logo as a sample image to avoid complicating
-      // this example with cross-domain issues.
-      xhr.open( "GET", "https://gateway.ipfs.io/ipfs/" + hash, true );
-
-      // Ask for the result as an ArrayBuffer.
-      xhr.responseType = "arraybuffer";
-
-      xhr.onload = function( e ) {
-        // Obtain a blob: URL for the image data.
-        var arrayBufferView = new Uint8Array(this.response);
-        var blob = new Blob( [ arrayBufferView ], { type: "image/jpeg" } );
-        var urlCreator = window.URL || window.webkitURL;
-        var imageUrl = urlCreator.createObjectURL( blob );
-        // 
-        var image = document.querySelector('#ipfsImage');
-
-        if(image !== null) {
-          // Id is unique but className is not. However I used Id in both because if you look at elements, it changes when you go from one page to another i.e. in the source code, there will only ever by 1 id of ipfsImage.
-         image.src = imageUrl;
-        } 
-      };
-
-      xhr.send();
-    }
+  getFromIPFS(hash) {
+    var url = "https://gateway.ipfs.io/ipfs/" + hash;
+    return new Promise((resolve, reject) => {
+      let img = new Image();
+      img.addEventListener('load', e => resolve(img));
+      img.addEventListener('error', () => {
+        reject(new Error(`Failed to load image's URL: ${url}`));
+      });
+      img.src = url;
+    });
   }
 
   requestForApproval = async (contract, requester, requestee) => {
@@ -747,7 +693,6 @@ class App extends Component {
     // Need to check that the address length is 42. Anything shorter and it's not a valid address.
     if(requestee.length === 42) {
       try {
-        console.log("trying to request for approval from a user");
         await this.requestForApproval(contract, requester, requestee);
         alert("Successfully requested for approval from " + requestee + "!")
       } catch(error) {
@@ -810,18 +755,6 @@ class App extends Component {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
   getIdentityFrom = async (contract, requester, requestee) => {
     return new Promise(function(resolve, reject) {
       contract.getIdentityFrom(
@@ -847,7 +780,6 @@ class App extends Component {
     let contract = this.state.contract;
 
     try {
-      console.log("trying to retrieve identity of requestee");
       let result = await this.getIdentityFrom(contract, requester, requestee);
       let name = result[0];
       let imageHash = result[1];
@@ -856,7 +788,18 @@ class App extends Component {
       } else {
         document.getElementById("name").innerHTML = "Name: "
         document.getElementById("output").innerHTML = name;
-        await this.getFromIPFS(imageHash)
+        await this.getFromIPFS(imageHash).then(
+          img => {
+            var tag = document.getElementById('ipfsImage');
+            if(!tag.hasChildNodes())
+            {
+              tag.appendChild(img);
+            } else {
+              tag.removeChild(tag.childNodes[0]);
+              tag.appendChild(img);
+            }
+      })
+    .catch(error => console.error(error));
       }
     } catch(error) {
       alert("Unable to get identity, please see the developer console.")
@@ -875,10 +818,6 @@ class App extends Component {
     // Getting redirect if any.
     if(prevAddress !== address && currPath !== nextPath) {
       redirect = <Redirect exact from={currPath} to={nextPath}/>
-      // console.log(prevAddress)
-      // console.log(address)
-      // console.log(currPath)
-      // console.log(nextPath)
 
     }
     // 4 scenarios
@@ -889,7 +828,6 @@ class App extends Component {
 
     // When metamask is not enabled and address is undefined (not logged in)
     if(!address) {
-      console.log("metamask not enabled, inside getContents")
       // If user is not logged in, display disconnected page
       return (
         <div style =
@@ -921,14 +859,9 @@ class App extends Component {
         </div>
       )
     } else {
-      console.log("metamask enabled, inside getContents");
-
 
       // If user is not registered, display new registration page
       if(!app.state.registered){
-        console.log("user not registered, inside getContents")
-
-
         const button = () => {
           // Don't forget to specify max length for input.
           return(
@@ -984,8 +917,6 @@ class App extends Component {
         )
       } else {
 
-        console.log("user registered, inside getContents")
-
         // If user is registered, display connected page
         return (
           <div style =
@@ -1017,7 +948,8 @@ class App extends Component {
                 </li>
                 <li>
                   <Link to="/updateDetails" onClick={() =>
-                    this.getFromIPFS(app.state.imageHash)}>
+                    this.getFromIPFS(app.state.imageHash).then(img => document.getElementById('ipfsImage').appendChild(img))
+    .catch(error => console.error(error))}>
                     Update your Details
                   </Link>
                 </li>
@@ -1068,14 +1000,9 @@ class App extends Component {
 
   render() { 
 
-    console.log("state is:", this.state);
-
     if (!this.state.web3) { 
-      console.log("First initialisation, inside render");
       return <div>Loading Web3, accounts, and contract...</div>
     } else {
-      console.log("Subsequent renders, inside render");
-
       return(
         <Router>
           {this.getContents(this)}
@@ -1083,10 +1010,6 @@ class App extends Component {
       )
     }
   }
-
-
-
 }
-
 
 export default App

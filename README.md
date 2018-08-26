@@ -31,12 +31,13 @@ Without further ado, let's proceed to set this up!
 
 ### To interact with the dapp, please do the following
 1. Run ganache-cli -m and connect metamask to ganache (under settings, new RPC url, enter http://127.0.0.1:8545)
-2. Import at least 5 accounts to Metamask (you can run ganache-cli -m instead of ganache-cli so you don't have to keep reimporting accounts)
+2. Import at least 5 accounts to Metamask
 3. Navigate to the root folder (there should be a contracts folder in this folder) and do "truffle compile" followed by "truffle migrate"
 4. Navigate to the client folder and do npm install
 5. Open a new terminal and run ipfs init followed by the following commands:
   - ipfs config Addresses.API /ip4/127.0.0.1/tcp/5001
   - ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["*"]'
+  - ipfs config --json Gateway.HTTPHeaders.Access-Control-Allow-Origin '["*"]'
   - ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["PUT", "GET", "POST"]'
 6. run ipfs daemon
 7. run npm start inside the terminal that is currently in the client folder (consensys-final-project/client)
