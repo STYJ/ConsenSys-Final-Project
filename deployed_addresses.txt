@@ -1,0 +1,2 @@
+UserRegistryStorage - 0xe1290df0c25ee26c7d372d80bd7716a75b3a333e
+UserRegistryLogic - 0x25034a83092b154960e7bb14b60218afe7855050
