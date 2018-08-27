@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import getWeb3 from './utils/getWeb3'
 import ipfs from './utils/getIPFS'
+import bgImage from './images/Blockchain.jpg'
 
 import getContractInstance from './utils/getContractInstance'
 import logicContractDefinition from './contracts/UserRegistryLogic.json'
@@ -234,13 +235,28 @@ class App extends Component {
             <h2>Update your details here!</h2>
             <form onSubmit={this.update}>
               <div id="ipfsImage"></div>
-              <br/>
               <label>
                 Current Name: {this.state.name} <br/>
-                New Name:<input placeholder="Enter your new name" type="text" id="name" size='20' maxLength='20'/>
+                New Name:
+                <div style = {{
+                    display: 'inline',
+                    paddingLeft: '10px'
+                  }}
+                >
+                    <input placeholder="Enter your new name" type="text" id="name" size='20' maxLength='20'/>
+                </div>
+
+
                 <br/>
                 New Image:
-                <input type="file" id="image"/>
+                <div style = {{
+                    display: 'inline',
+                    paddingLeft: '8px'
+                  }}
+                >
+                  <input type="file" id="image"/>
+                </div>
+
               </label>
               <br/>
               <button>Update Identity</button>
@@ -350,9 +366,8 @@ class App extends Component {
                 View details of <input placeholder="Enter requestee's address here" type="text" id="address" size='42' maxLength='42'/> 
               </label>
               <button>View details</button>
-            </form>
+            </form><br/>
             <div id="ipfsImage"></div>
-            <br/>
             <label id="name">  
             </label>
             <label id="output">
@@ -798,7 +813,7 @@ class App extends Component {
               tag.removeChild(tag.childNodes[0]);
               tag.appendChild(img);
             }
-      })
+          })
     .catch(error => console.error(error));
       }
     } catch(error) {
@@ -865,53 +880,79 @@ class App extends Component {
         const button = () => {
           // Don't forget to specify max length for input.
           return(
-
-            <form onSubmit={this.register}>
-              <label>
-                Name:
-                <input placeholder="Your name" type="text" id="name"/>
-              </label>
-              <br/>
-              <label>
-                Image:
-                <input placeholder="Your image" type="file" id="image"/>
-              </label>
-              <br/>
-
-
-              <button>Submit Registration!</button>
-            </form>
+            <div style = {{
+                color: 'white'
+              }}
+            >
+              <form onSubmit={this.register}>
+                <label>
+                  Name:
+                  <div style = {{
+                    display: 'inline',
+                    paddingLeft: '10px'
+                  }}
+                  >
+                    <input placeholder="Your name" type="text" id="name"/>
+                  </div>
+                </label><br/>
+                <label>
+                  Image:
+                  <div style = {{
+                    display: 'inline',
+                    paddingLeft: '8px'
+                  }}
+                  >
+                    <input placeholder="Your image" type="file" id="image"/>
+                  </div>
+                </label><br/><br/>
+                <button>Submit Registration!</button>
+              </form>
+            </div>
           )
         }
 
         return (
           <div style =
-            // Style related to this div (entire page)
             {{
-              display: "flex",
-              height: "100%",
+              minHeight: '100%',
+              minHidth: '1024px',
+              width: '100%',
+              height: 'auto',
+              position: 'fixed',
+              top: '0',
+              left: '0',
+              backgroundImage: 'url('+bgImage+')'
             }}
           >
             <div style =
-            // Styling for this div (entire page)
+              // Style related to this div (entire page)
               {{
-                flex: 1,
-                marginLeft: "20%"
+                display: "flex",
               }}
             >
-                                        
-              <Switch>
-                {redirect}
-                {app.state.route.map((route, index) => (
-                  <Route
-                    key={index}
-                    path={route.path}
-                    component={route.main}
-                  />
-                ))}
+              <div style =
+              // Styling for this div (entire page)
+                {{
+                  flex: 1,
+                  marginLeft: "10%",
+                  marginRight: "10%",
+                  color: 'white'
+                }}
+              >
+                                          
+                <Switch>
+                  {redirect}
+                  {app.state.route.map((route, index) => (
+                    <Route
+                      key={index}
+                      path={route.path}
+                      component={route.main}
+                    />
+                  ))}
 
-              </Switch>
-              <Route path="/newRegistration" component={button} />
+                </Switch>
+                <Route path="/newRegistration" component={button} />
+              </div>
             </div>
           </div>
         )
@@ -920,73 +961,101 @@ class App extends Component {
         // If user is registered, display connected page
         return (
           <div style =
-            // Styling for this div (entire page)
             {{
-              display: "flex",
-              height: "100%",
+              minHeight: '100%',
+              minHidth: '1024px',
+              width: '100%',
+              height: 'auto',
+              position: 'fixed',
+              top: '0',
+              left: '0',
+              backgroundImage: 'url('+bgImage+')'
             }}
           >
-            <div style = 
-              // Styling for this div (left panel)
-              {{
-                padding: "0px",
-                width: "20%",
-                background: "#f0f0f0",
-                position: "fixed",
-                overflow: "auto"
-              }}
-            >      
-              <ul 
-                // Styling specific to the nav bar
-                style={{
-                  listStyleType: "none",
-                  padding: "10px"
-                }}
-              >
-                <li>
-                  <Link to="/home">Home</Link>
-                </li>
-                <li>
-                  <Link to="/updateDetails" onClick={() =>
-                    this.getFromIPFS(app.state.imageHash).then(img => document.getElementById('ipfsImage').appendChild(img))
-    .catch(error => console.error(error))}>
-                    Update your Details
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/requestApproval">Request for Approval</Link>
-                </li>
-                <li>
-                  <Link to="/pendingApproval">Pending your Approval</Link>
-                </li>
-                <li>
-                  <Link to="/getDetails">Get someone's Details</Link>
-                </li>
-                <li>
-                  <Link to="/about">About</Link>
-                </li>
-              </ul>
-            </div>
-
             <div style =
-              // Styling for this div (right panel)
+              // Styling for this div (entire page)
               {{
-                flex: 1,
-                marginLeft: "22%"
+                display: "flex",
+                height: "100%",
               }}
-            > 
-              <Switch>
-                {redirect}
-                {app.state.route.map((route, index) => (
-                  // Getting contents of the right panel
-                  // You can render <Route>(s) in many places
-                  <Route
-                    key={index}
-                    path={route.path}
-                    component={route.main}
-                  />
-                ))}
-              </Switch>
+            >
+              <div id="navBar" style = 
+                // Styling for this div (left panel)
+                {{
+                  flex: 1,
+                  padding: "0px",
+                  height: "100%",
+                  opacity: '0.5',
+                  background: "#f0f0f0",
+                  position: "fixed"
+                }}
+              >      
+                <ul 
+                  // Styling specific to the nav bar
+                  style={{
+                    listStyleType: "none",
+                    fontSize: '20px',
+                    padding: "20px",
+                    display: "grid"
+                  }}
+                > 
+                  <li>
+                    <Link to="/home">Home</Link>
+                  </li><br/>
+                  <li>
+                    <Link to="/updateProfile" onClick={() =>
+                      this.getFromIPFS(app.state.imageHash).then(
+                        img => {
+                          var tag = document.getElementById('ipfsImage');
+                          if(!tag.hasChildNodes())
+                          {
+                            tag.appendChild(img);
+                          } else {
+                            tag.removeChild(tag.childNodes[0]);
+                            tag.appendChild(img);
+                          }
+                        }
+                      ).catch(error => console.error(error))}>
+                      Update Profile
+                    </Link>
+                  </li><br/>
+                  <li>
+                    <Link to="/makeRequests">Make Request</Link>
+                  </li><br/>
+                  <li>
+                    <Link to="/getRequests">Your Requests</Link>
+                  </li><br/>
+                  <li>
+                    <Link to="/getDetails">Get Details</Link>
+                  </li><br/>
+                  <li>
+                    <Link to="/about">About</Link>
+                  </li><br/>
+                </ul>
+              </div>
+
+              <div style =
+                // Styling for this div (right panel)
+                {{
+                  display: "flex",
+                  marginLeft: "11%",
+                  color: "white",
+                  fontSize: '25px'
+                }}
+              > 
+                <Switch>
+                  {redirect}
+                  {app.state.route.map((route, index) => (
+                    // Getting contents of the right panel
+                    // You can render <Route>(s) in many places
+                    <Route
+                      key={index}
+                      path={route.path}
+                      component={route.main}
+                    />
+                  ))}
+                </Switch>
+              </div>
             </div>
           </div>
         )
