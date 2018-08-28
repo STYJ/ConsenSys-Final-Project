@@ -63,6 +63,7 @@ class App extends Component {
 
     this.approveRequester = this.approveRequester.bind(this);
     this.unapproveRequester = this.unapproveRequester.bind(this);
+    this.remove = this.remove.bind(this);
     this.view = this.view.bind(this);
     this.getIdentityFrom = this.getIdentityFrom.bind(this);
 
@@ -300,7 +301,9 @@ class App extends Component {
                                 this.state.approvalRequests[i],
                                 this.state.address
                               )
-                              alert("Requester " + this.state.approvalRequests[i] + " has been approved. Unfortunately, I am not able to redirect my page properly after requests are approved so I will need your help to manually refresh the browser.")
+                              alert("Requester " + this.state.approvalRequests[i] + " has been approved.")
+                              document.getElementById('Approval Requests table').childNodes[1].removeChild(document.getElementById('row ' + i))
+
                             } catch(error) {
                               alert("Unable to approve request, please see the developer console.");
                               console.log(error);
@@ -317,7 +320,8 @@ class App extends Component {
                                 this.state.address
                               )
 
-                              alert("Requester " + this.state.approvalRequests[i] + " has been rejected. Unfortunately, I am not able to redirect my page properly after requests are rejected so I will need your help to manually refresh the browser.")
+                              alert("Requester " + this.state.approvalRequests[i] + " has been rejected.")
+                              document.getElementById('Approval Requests table').childNodes[1].removeChild(document.getElementById('row ' + i))
                             } catch(error) {
                               alert("Unable to reject request, please see the developer console.");
                               console.log(error);
@@ -335,9 +339,11 @@ class App extends Component {
 
           // <button>Approve Selected</button>
           // <button>Reject Selected</button>
+
           return (
 
             <div>
+              <p>Please refresh your browser once you are done. Note that if you refresh too quickly and the transaction has not been mined, the address which you previously approved/rejected will still appear but you cannot sign any transactions related to it as it is being confirmed.</p>
               <table id="Approval Requests table">
                 <thead >
                   <tr>
@@ -846,30 +852,46 @@ class App extends Component {
       // If user is not logged in, display disconnected page
       return (
         <div style =
-          // Style related to this div (entire page)
           {{
-            display: "flex",
-            height: "100%",
+            minHeight: '100%',
+            minHidth: '1024px',
+            width: '100%',
+            height: 'auto',
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            backgroundImage: 'url('+bgImage+')'
           }}
         >
           <div style =
-          // Styling for this div (entire page)
+            // Style related to this div (entire page)
             {{
-              flex: 1,
-              marginLeft: "40%"
+              display: "flex",
+              height: "100%",
+              color: "white",
+              fontSize: '20px'
+
             }}
           >
-                                      
-            <Switch>
-              {redirect}
-              {app.state.route.map((route, index) => (
-                <Route
-                  key={index}
-                  path={route.path}
-                  component={route.main}
-                />
-              ))}
-            </Switch>
+            <div style =
+            // Styling for this div (entire page)
+              {{
+                flex: 1,
+                textAlign: "center"
+              }}
+            >
+                                        
+              <Switch>
+                {redirect}
+                {app.state.route.map((route, index) => (
+                  <Route
+                    key={index}
+                    path={route.path}
+                    component={route.main}
+                  />
+                ))}
+              </Switch>
+            </div>
           </div>
         </div>
       )
@@ -1038,7 +1060,7 @@ class App extends Component {
                 // Styling for this div (right panel)
                 {{
                   display: "flex",
-                  marginLeft: "11%",
+                  marginLeft: "15%",
                   color: "white",
                   fontSize: '25px'
                 }}
@@ -1063,6 +1085,10 @@ class App extends Component {
     }
   }
 
+  remove = (i) => {
+    var btn = document.getElementById('row ' + i)
+    console.log(btn);
+  }
 
 
   render() { 

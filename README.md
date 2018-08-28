@@ -56,4 +56,3 @@ Without further ado, let's proceed to set this up!
 
 1. I used a more updated truffle react boilerplate which can be found here https://github.com/adrianmcli/truffle-react but I downgraded the web3 version to 0.20.7 as it is more stable.
 2. Please wait for transactions to be confirmed before swapping metamask accounts otherwise the transactions will be stuck in limbo on the blockchain (where it's mined but metamask says it's pending confirmation).
-3. There is a front end bug that I am unable to fix. I've spent a lot of time on it but to no avail. I will require your assistance to help me refresh the page. You will be notified via an alert so please read my alerts carefully! 
