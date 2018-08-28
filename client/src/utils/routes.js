@@ -51,6 +51,7 @@ export const connectedRoutes = [
               <li>Users can update their identity details</li>
               <li>Users are required to request for approval before they are able to view someone else's identity</li>
               <li>Requestees can approve or reject an approval to view their accounts</li>
+              <li>When you swap metamask accounts, the UI will be reflected accordingly</li>
             </ul>
           <h2>Further extensions</h2>
             <ul>
